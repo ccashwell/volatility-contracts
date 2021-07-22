@@ -42,9 +42,6 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 		uint256 lastRewardBlock; // Last block where rewards were calculated.
 	}
 
-	// Distribution vault.
-	VestingMultiVault public immutable vault;
-
 	// Reward configuration.
 	IERC20 public immutable rewardToken;
 	uint256 public rewardPerBlock;
@@ -65,9 +62,6 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 
 	// The block number when staking starts.
 	uint256 public startBlock;
-
-	// The token being vested.
-	IERC20 public immutable token;
 
 	// The amount unclaimed for an address, whether or not vested.
 	mapping(address => uint256) public pendingAmount;
@@ -101,16 +95,13 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 	 * @param _startBlock The first block at which staking is allowed.
 	 * @param _vestingCliff The number of seconds until issued rewards begin vesting.
 	 * @param _vestingDuration The number of seconds after issuance until vesting is completed.
-	 * @param _vault The VestingMultiVault that is ultimately responsible for reward distribution.
 	 */
 	constructor(
 		IERC20 _rewardToken,
 		uint256 _rewardPerBlock,
 		uint256 _startBlock,
 		uint256 _vestingCliff,
-		uint256 _vestingDuration,
-		VestingMultiVault _vault,
-		IERC20 _token
+		uint256 _vestingDuration
 	) {
 		// Set the initial reward config
 		rewardPerBlock = _rewardPerBlock;
@@ -118,14 +109,11 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 		vestingCliff = _vestingCliff;
 		vestingDuration = _vestingDuration;
 
-		// Set the vault and reward token (immutable after creation)
-		vault = _vault;
 		rewardToken = _rewardToken;
 
 		// Approve the vault to pull reward tokens
-		_rewardToken.approve(address(_vault), 2**256 - 1);
+		_rewardToken.approve(address(this), 2**256 - 1);
 
-		token = _token;
 		_setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 		_setupRole(ISSUER, msg.sender);
 	}
@@ -233,6 +221,20 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 	}
 
 	/**
+	 * @dev View function to see total locked amount for an address.
+	 * @param _pid The pool identifier.
+	 * @param _beneficiary The address to check.
+	 */
+	function totalLocked(uint256 _pid, address _beneficiary)
+		external
+		view
+		returns (uint256 total)
+	{
+		UserInfo memory user = userInfo[_pid][_beneficiary];
+		return user.amount.add(pendingAmount[_beneficiary]);
+	}
+
+	/**
 	 * @dev View function to see pending rewards for an address. Likely gas intensive.
 	 * @param _pid The pool identifier.
 	 * @param _beneficiary The address to check.
@@ -256,7 +258,13 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 			accPerShare = accPerShare.add(reward.mul(1e12).div(tokenSupply));
 		}
 
-		return user.amount.mul(accPerShare).div(1e12).sub(user.rewardDebt);
+		return
+			user
+				.amount
+				.add(pendingAmount[_beneficiary])
+				.mul(accPerShare)
+				.div(1e12)
+				.sub(user.rewardDebt);
 	}
 
 	/**
@@ -480,6 +488,7 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 			// calculate the pending reward
 			uint256 pending = user
 				.amount
+				.add(pendingAmount[to])
 				.mul(pool.accPerShare)
 				.div(1e12)
 				.sub(user.rewardDebt)
@@ -507,7 +516,7 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 		uint256 available = rewardToken.balanceOf(address(this));
 		amount = _amount > available ? available : _amount;
 
-		vault.issue(
+		_issue(
 			_to, // address _beneficiary,
 			_amount, // uint256 _amount,
 			block.timestamp, // uint256 _startAt,
@@ -538,8 +547,61 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 		uint256 _duration,
 		uint256 _initialPct
 	) external override onlyRole(ISSUER) {
+		_issue(_beneficiary, _amount, _startAt, _cliff, _duration, _initialPct);
+	}
+
+	/**
+	 * @dev Creates a batch allocation. Tokens are released
+	 * linearly over time until a given number of seconds have passed since the
+	 * start of the vesting schedule. Callable only by issuers.
+	 * @param _beneficiary The address array to which tokens will be released
+	 * @param _amount The amount array of the allocation (in wei)
+	 * @param _startAt The unix timestamp array at which the vesting may begin
+	 * @param _cliff The number of seconds array after _startAt before which no vesting occurs
+	 * @param _duration The number of seconds array after which the entire allocation is vested
+	 * @param _initialPct The percentage of the allocation array initially available (integer, 0-100)
+	 */
+	function batchIssue(
+		address[] memory _beneficiary,
+		uint256[] memory _amount,
+		uint256[] memory _startAt,
+		uint256[] memory _cliff,
+		uint256[] memory _duration,
+		uint256[] memory _initialPct
+	) external onlyRole(ISSUER) {
+		for (uint256 i = 0; i < _beneficiary.length; i++) {
+			_issue(
+				_beneficiary[i],
+				_amount[i],
+				_startAt[i],
+				_cliff[i],
+				_duration[i],
+				_initialPct[i]
+			);
+		}
+	}
+
+	/**
+	 * @dev Creates a new allocation for a beneficiary. Tokens are released
+	 * linearly over time until a given number of seconds have passed since the
+	 * start of the vesting schedule. Callable only by issuers.
+	 * @param _beneficiary The address to which tokens will be released
+	 * @param _amount The amount of the allocation (in wei)
+	 * @param _startAt The unix timestamp at which the vesting may begin
+	 * @param _cliff The number of seconds after _startAt before which no vesting occurs
+	 * @param _duration The number of seconds after which the entire allocation is vested
+	 * @param _initialPct The percentage of the allocation initially available (integer, 0-100)
+	 */
+	function _issue(
+		address _beneficiary,
+		uint256 _amount,
+		uint256 _startAt,
+		uint256 _cliff,
+		uint256 _duration,
+		uint256 _initialPct
+	) internal {
 		require(
-			token.allowance(msg.sender, address(this)) >= _amount,
+			rewardToken.allowance(msg.sender, address(this)) >= _amount,
 			"Token allowance not sufficient"
 		);
 		require(
@@ -553,7 +615,7 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 		);
 
 		// Pull the number of tokens required for the allocation.
-		token.safeTransferFrom(msg.sender, address(this), _amount);
+		rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
 
 		// Increase the total pending for the address.
 		pendingAmount[_beneficiary] = pendingAmount[_beneficiary].add(_amount);
@@ -591,6 +653,16 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 		override
 		onlyRole(ISSUER)
 	{
+		_revoke(_beneficiary, _id);
+	}
+
+	/**
+	 * @dev Revokes an existing allocation. Any unclaimed tokens are recalled
+	 * and sent to the caller. Callable only be issuers.
+	 * @param _beneficiary The address whose allocation is to be revoked
+	 * @param _id The allocation ID to revoke
+	 */
+	function _revoke(address _beneficiary, uint256 _id) internal {
 		Allocation storage allocation = userAllocations[_beneficiary][_id];
 
 		// Calculate the remaining amount.
@@ -606,7 +678,7 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 		allocation.claimed = total;
 
 		// Transfer the tokens vested
-		token.safeTransfer(msg.sender, remainder);
+		rewardToken.safeTransfer(msg.sender, remainder);
 		emit Revoked(_beneficiary, _id, total, remainder);
 	}
 
@@ -629,7 +701,7 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 		pendingAmount[_beneficiary] = pendingAmount[_beneficiary].sub(amount);
 
 		// Transfer the tokens to the beneficiary.
-		token.safeTransfer(_beneficiary, amount);
+		rewardToken.safeTransfer(_beneficiary, amount);
 
 		emit Released(
 			_beneficiary,
