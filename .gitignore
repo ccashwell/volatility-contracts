@@ -7,4 +7,5 @@ typechain
 coverage
 bin
 
+coverage.json
 .env

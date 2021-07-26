@@ -7,9 +7,10 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./VestingMultiVault.sol";
 import "./interfaces/IVestingVault.sol";
+import "hardhat/console.sol";
 
 /**
- * @title StakeRewarder
+ * @title StakeRewarderV2
  * @dev This contract distributes rewards to depositors of supported tokens.
  * It's based on Sushi's MasterChef v1, but notably only serves what's already
  * available: no new tokens can be created. It's just a restaurant, not a farm.
@@ -522,7 +523,8 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 			block.timestamp, // uint256 _startAt,
 			vestingCliff, // uint256 _cliff,
 			vestingDuration, // uint256 _duration,
-			0 // uint256 _initialPct
+			0, // uint256 _initialPct
+			address(this)
 		);
 
 		return amount;
@@ -547,7 +549,15 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 		uint256 _duration,
 		uint256 _initialPct
 	) external override onlyRole(ISSUER) {
-		_issue(_beneficiary, _amount, _startAt, _cliff, _duration, _initialPct);
+		_issue(
+			_beneficiary,
+			_amount,
+			_startAt,
+			_cliff,
+			_duration,
+			_initialPct,
+			msg.sender
+		);
 	}
 
 	/**
@@ -576,7 +586,8 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 				_startAt[i],
 				_cliff[i],
 				_duration[i],
-				_initialPct[i]
+				_initialPct[i],
+				msg.sender
 			);
 		}
 	}
@@ -598,10 +609,11 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 		uint256 _startAt,
 		uint256 _cliff,
 		uint256 _duration,
-		uint256 _initialPct
+		uint256 _initialPct,
+		address _from
 	) internal {
 		require(
-			rewardToken.allowance(msg.sender, address(this)) >= _amount,
+			rewardToken.allowance(_from, address(this)) >= _amount,
 			"Token allowance not sufficient"
 		);
 		require(
@@ -615,7 +627,7 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 		);
 
 		// Pull the number of tokens required for the allocation.
-		rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
+		rewardToken.safeTransferFrom(_from, address(this), _amount);
 
 		// Increase the total pending for the address.
 		pendingAmount[_beneficiary] = pendingAmount[_beneficiary].add(_amount);
