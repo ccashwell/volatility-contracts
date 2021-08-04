@@ -65,7 +65,7 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 	uint256 public startBlock;
 
 	// The amount unclaimed for an address, whether or not vested.
-	mapping(address => uint256) public pendingAmount;
+	mapping(address => uint256) public totalUserVestedAmount;
 
 	// The allocations assigned to an address.
 	mapping(address => Allocation[]) public userAllocations;
@@ -232,7 +232,7 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 		returns (uint256 total)
 	{
 		UserInfo memory user = userInfo[_pid][_beneficiary];
-		return user.amount.add(pendingAmount[_beneficiary]);
+		return user.amount.add(totalUserVestedAmount[_beneficiary]);
 	}
 
 	/**
@@ -262,7 +262,7 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 		return
 			user
 				.amount
-				.add(pendingAmount[_beneficiary])
+				.add(totalUserVestedAmount[_beneficiary])
 				.mul(accPerShare)
 				.div(1e12)
 				.sub(user.rewardDebt);
@@ -296,7 +296,10 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 	{
 		PoolInfo storage pool = poolInfo[_pid];
 		UserInfo storage user = userInfo[_pid][_beneficiary];
-		return pool.power.mul(user.amount);
+		return
+			pool.power.mul(
+				user.amount.add(totalUserVestedAmount[_beneficiary])
+			);
 	}
 
 	/**
@@ -489,7 +492,7 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 			// calculate the pending reward
 			uint256 pending = user
 				.amount
-				.add(pendingAmount[to])
+				.add(totalUserVestedAmount[to])
 				.mul(pool.accPerShare)
 				.div(1e12)
 				.sub(user.rewardDebt)
@@ -630,7 +633,9 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 		rewardToken.safeTransferFrom(_from, address(this), _amount);
 
 		// Increase the total pending for the address.
-		pendingAmount[_beneficiary] = pendingAmount[_beneficiary].add(_amount);
+		totalUserVestedAmount[_beneficiary] = totalUserVestedAmount[
+			_beneficiary
+		].add(_amount);
 
 		// Push the new allocation into the stack.
 		userAllocations[_beneficiary].push(
@@ -682,9 +687,9 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 		uint256 remainder = total.sub(allocation.claimed);
 
 		// Update the total pending for the address.
-		pendingAmount[_beneficiary] = pendingAmount[_beneficiary].sub(
-			remainder
-		);
+		totalUserVestedAmount[_beneficiary] = totalUserVestedAmount[
+			_beneficiary
+		].sub(remainder);
 
 		// Update the allocation to be claimed in full.
 		allocation.claimed = total;
@@ -710,7 +715,9 @@ contract StakeRewarderV2 is Ownable, AccessControl, IVestingVault {
 		allocation.claimed = allocation.claimed.add(amount);
 
 		// Subtract the amount from the beneficiary's total pending.
-		pendingAmount[_beneficiary] = pendingAmount[_beneficiary].sub(amount);
+		totalUserVestedAmount[_beneficiary] = totalUserVestedAmount[
+			_beneficiary
+		].sub(amount);
 
 		// Transfer the tokens to the beneficiary.
 		rewardToken.safeTransfer(_beneficiary, amount);
