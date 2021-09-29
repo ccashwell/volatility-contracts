@@ -124,10 +124,31 @@ describe("DAOraclePool", () => {
       const [admin, user1]: Signer[] = await ethers.getSigners();
       const user: string = await user1.getAddress();
 
-      const initialBalance: BigNumber = await testToken.balanceOf(user);
+      const balance: BigNumber = await testToken.balanceOf(user);
       await pool.connect(user1).burn(1000);
 
-      expect(await testToken.balanceOf(user)).to.equal(initialBalance.add(100));
+      expect(await testToken.balanceOf(user)).to.be.above(balance);
+    });
+
+    it("pays out underlying tokens proportionally", async () => {
+      const [admin, user1]: Signer[] = await ethers.getSigners();
+      const user: string = await user1.getAddress();
+
+      const initialBalance: BigNumber = await testToken.balanceOf(user);
+      const totalStaked: BigNumber = await testToken.balanceOf(pool.address);
+      const totalShares: BigNumber = await pool.totalSupply();
+      const userShares: BigNumber = await pool.balanceOf(user);
+
+      // payout should be `(userShares * totalStaked) / totalShares`
+      const expectedPayout: BigNumber = userShares
+        .mul(totalStaked)
+        .div(totalShares);
+
+      await pool.connect(user1).burn(1000);
+
+      expect(await testToken.balanceOf(user)).to.equal(
+        initialBalance.add(expectedPayout)
+      );
     });
 
     it("charges a fee if one is set", async () => {
