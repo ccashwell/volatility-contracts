@@ -1,16 +1,4 @@
 {
-    "overrides": [
-      {
-        "files": "*.sol",
-        "options": {
-          "printWidth": 80,
-          "tabWidth": 4,
-          "useTabs": true,
-          "singleQuote": false,
-          "bracketSpacing": true,
-          "explicitTypes": "always"
-        }
-      }
-    ]
-  }
-  
+  "tabWidth": 2,
+  "useTabs": false
+}
