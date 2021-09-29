@@ -12,8 +12,13 @@ import "hardhat/console.sol";
 
 /**
  * @title DAOraclePool
- * @dev The DAOracle Network relies on decentralized risk pools. This is the
- * base implementation which wraps a single arbitrary token.
+ * @dev The DAOracle Network relies on decentralized risk pools. This is a
+ * simple implementation of a staking pool which wraps a single arbitrary token
+ * and provides a mechanism for recouping losses incurred by the deployer of
+ * the underlying. Pool ownership is represented as ERC20 tokens that can be
+ * freely used as the holder sees fit. Holders of pool shares may make claims
+ * proportional to their stake on the underlying token balance of the pool. Any
+ * rewards or penalties applied to the pool will thus impact all holders.
  */
 contract DAOraclePool is ERC20, ERC20Permit, Ownable {
   using SafeERC20 for IERC20;
@@ -33,6 +38,10 @@ contract DAOraclePool is ERC20, ERC20Permit, Ownable {
   address public feePayee;
 
   event FeesChanged(uint256 mintFee, uint256 burnFee, address payee);
+  event Fee(uint256 feeAmount);
+
+  event Deposit(address indexed depositor, uint256 underlyingAmount, uint256 tokensMinted);
+  event Payout(address indexed beneficiary, uint256 underlyingAmount, uint256 tokensBurned);
 
 	constructor(
     IERC20 _underlying,
@@ -69,6 +78,7 @@ contract DAOraclePool is ERC20, ERC20Permit, Ownable {
     if (fee != 0) {
       underlying.safeTransfer(feePayee, fee);
       _stakeAmount = _stakeAmount.sub(fee);
+      emit Fee(fee);
     }
 
     // Calculate the pool shares for the new deposit
@@ -82,6 +92,7 @@ contract DAOraclePool is ERC20, ERC20Permit, Ownable {
 
     // Transfer shares to caller
 		_mint(msg.sender, shares);
+    emit Deposit(msg.sender, _stakeAmount, shares);
   }
 
   /**
@@ -99,7 +110,7 @@ contract DAOraclePool is ERC20, ERC20Permit, Ownable {
     uint256 balance = underlying.balanceOf(address(this));
     tokens = _shareAmount.mul(balance).div(totalSupply());
 
-    // Burn the caller's shares
+    // Burn the caller's shares before anything else
     _burn(msg.sender, _shareAmount);
 
     // Calculate the fee for burning
@@ -107,10 +118,12 @@ contract DAOraclePool is ERC20, ERC20Permit, Ownable {
     if (fee != 0) {
       tokens = tokens.sub(fee);
       underlying.safeTransfer(feePayee, fee);
+      emit Fee(fee);
     }
 
     // Transfer underlying tokens back to caller
     underlying.safeTransfer(msg.sender, tokens);
+    emit Payout(msg.sender, tokens, _shareAmount);
   }
 
   /**
