@@ -36,7 +36,8 @@ describe("DAOraclePool", () => {
   describe("Initial state", () => {
     it("is owned by the admin", async () => {
       const [admin]: Signer[] = await ethers.getSigners();
-      expect(await pool.owner()).to.equal(await admin.getAddress());
+      expect(await pool.hasRole(await pool.MANAGER(), await admin.getAddress()))
+        .to.be.true;
     });
 
     it("has the correct underlying", async () => {
@@ -45,6 +46,16 @@ describe("DAOraclePool", () => {
 
     it("has no shares", async () => {
       expect(await pool.totalSupply()).to.equal(BN(0));
+    });
+
+    it("has the correct name", async () => {
+      expect(await pool.name()).to.equal(
+        `DAOraclePool: ${await testToken.name()}`
+      );
+    });
+
+    it("has the correct symbol", async () => {
+      expect(await pool.symbol()).to.equal(`dp${await testToken.symbol()}`);
     });
   });
 
@@ -79,7 +90,7 @@ describe("DAOraclePool", () => {
     it("charges a fee if one is set", async () => {
       const [admin, user]: Signer[] = await ethers.getSigners();
       await pool.connect(admin).setFees(
-        100, // 100 bps = 1%
+        ethers.utils.parseEther("0.1"), // 10%
         0,
         await admin.getAddress()
       );
@@ -87,7 +98,7 @@ describe("DAOraclePool", () => {
       const balance = await testToken.balanceOf(await admin.getAddress());
       await pool.connect(user).mint(1000);
       expect(await testToken.balanceOf(await admin.getAddress())).to.equal(
-        balance.add(10)
+        balance.add(100)
       );
     });
   });
@@ -155,7 +166,7 @@ describe("DAOraclePool", () => {
       const [admin, user]: Signer[] = await ethers.getSigners();
       await pool.connect(admin).setFees(
         0,
-        100, // 100 bps = 1%
+        ethers.utils.parseEther("0.01"), // 1%
         await admin.getAddress()
       );
 
