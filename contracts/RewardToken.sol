@@ -10,4 +10,8 @@ contract RewardToken is ERC20 {
 		// fund the token swap contract
 		_mint(tokenHolder, INITIAL_SUPPLY * 1e18);
 	}
+  
+  function mint(address guy, uint256 wad) public {
+    _mint(guy, wad);
+  }
 }
