@@ -7,17 +7,17 @@ import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "./ManagedPool.sol";
 
 /**
- * @title FundingPool
+ * @title SponsorPool
  */
-contract FundingPool is ERC20, ERC20Permit, ManagedPool {
+contract SponsorPool is ERC20, ERC20Permit, ManagedPool {
   using SafeERC20 for IERC20;
 
   constructor(ERC20 _token)
     ERC20(
-      _concat("FundingPool: ", _token.name()),
+      _concat("SponsorPool: ", _token.name()),
       _concat("f", _token.symbol())
     )
-    ERC20Permit(_concat("FundingPool: ", _token.name()))
+    ERC20Permit(_concat("SponsorPool: ", _token.name()))
   {
     stakedToken = IERC20(_token);
     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
