@@ -4,14 +4,14 @@ import chai, { assert, expect } from "chai";
 import { solidity } from "ethereum-waffle";
 import { BigNumber, Signer } from "ethers";
 import { RewardToken } from "../../typechain/RewardToken";
-import { DAOraclePool } from "../../typechain/DAOraclePool";
+import { StakingPool } from "../../typechain/StakingPool";
 
 const BN = BigNumber.from;
 chai.use(solidity);
 
-describe("DAOraclePool", () => {
+describe("StakingPool", () => {
   let testToken: RewardToken;
-  let pool: DAOraclePool;
+  let pool: StakingPool;
 
   beforeEach("setup contracts", async () => {
     const [admin, user1, user2, user3]: Signer[] = await ethers.getSigners();
@@ -24,13 +24,13 @@ describe("DAOraclePool", () => {
       await testToken.transfer(await user.getAddress(), 100000000);
     }
 
-    const Pool = await ethers.getContractFactory("DAOraclePool");
+    const Pool = await ethers.getContractFactory("StakingPool");
     pool = (await Pool.deploy(
       testToken.address,
       0,
       0,
       await admin.getAddress()
-    )) as DAOraclePool;
+    )) as StakingPool;
   });
 
   describe("Initial state", () => {
@@ -50,7 +50,7 @@ describe("DAOraclePool", () => {
 
     it("has the correct name", async () => {
       expect(await pool.name()).to.equal(
-        `DAOraclePool: ${await testToken.name()}`
+        `StakingPool: ${await testToken.name()}`
       );
     });
 

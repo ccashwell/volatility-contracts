@@ -10,7 +10,7 @@ import "../vendor/uma/SkinnyOptimisticOracleInterface.sol";
 
 import "./DAOracleHelpers.sol";
 import "./vault/IVestingVault.sol";
-import "./pool/DAOraclePool.sol";
+import "./pool/StakingPool.sol";
 import "./pool/SponsorPool.sol";
 
 /**
@@ -105,7 +105,7 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
   uint32 public defaultDisputePeriod = 10 minutes;
 
   // Staking Pools (bond insurance)
-  mapping(IERC20 => DAOraclePool) public pool;
+  mapping(IERC20 => StakingPool) public pool;
 
   // Roles (for AccessControl)
   bytes32 public constant ORACLE = keccak256("ORACLE");
@@ -409,8 +409,8 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
     return keccak256(abi.encodePacked(timestamp, value, data));
   }
 
-  function _createPool(Index storage _index) internal returns (DAOraclePool) {
-    pool[_index.bondToken] = new DAOraclePool(
+  function _createPool(Index storage _index) internal returns (StakingPool) {
+    pool[_index.bondToken] = new StakingPool(
       ERC20(address(_index.bondToken)),
       0,
       0,
