@@ -5,7 +5,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 import {
   SkinnyDAOracle,
-  DAOraclePool,
+  StakingPool,
   RewardToken,
   VestingVault,
   SkinnyOptimisticOracleInterface,
@@ -323,15 +323,15 @@ describe("SkinnyDAOracle", () => {
     describe("Disputing", () => {
       let proposal: Proposal;
       let proposalId: string;
-      let pool: DAOraclePool;
+      let pool: StakingPool;
 
       beforeEach(async () => {
         const [us, staker] = await ethers.getSigners();
 
         pool = (await ethers.getContractAt(
-          "DAOraclePool",
+          "StakingPool",
           await daoracle.pool(DAI)
-        )) as DAOraclePool;
+        )) as StakingPool;
 
         await daiToken.connect(staker).approve(pool.address, toUnits("5000"));
         await pool.connect(staker).mint(toUnits("5000"));
