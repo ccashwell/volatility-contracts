@@ -85,6 +85,48 @@ export async function configureFeed(
   );
 }
 
+export async function setDefaultDisputePeriod(
+	daoracle: SkinnyDAOracle,
+	defaultDisputePeriod?: BigNumberish,
+	as?: SignerWithAddress,
+  ): Promise<ContractTransaction> {
+	if (as) {
+	  daoracle = daoracle.connect(as);
+	}
+  
+	return daoracle.setDefaultTtl(
+		defaultDisputePeriod ?? parseEther("3")
+	);
+}
+
+export async function setExternalIdentifier(
+	daoracle: SkinnyDAOracle,
+	externalIdentifier?: string,
+	as?: SignerWithAddress,
+  ): Promise<ContractTransaction> {
+	if (as) {
+	  daoracle = daoracle.connect(as);
+	}
+  
+	return daoracle.setExternalIdentifier(
+		externalIdentifier ?? hre.ethers.utils.formatBytes32String("ethVIX")
+	);
+}
+
+export async function setMaxOutstandingDisputes(
+	daoracle: SkinnyDAOracle,
+	maxOutstandingDisputes?: BigNumberish,
+	as?: SignerWithAddress,
+  ): Promise<ContractTransaction> {
+	if (as) {
+	  daoracle = daoracle.connect(as);
+	}
+  
+	return daoracle.setMaxOutstandingDisputes(
+		maxOutstandingDisputes ?? parseEther("3")
+	);
+}
+
 export const signProposal = async (
   daoracle: SkinnyDAOracle,
   proposal: Proposal,

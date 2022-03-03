@@ -103,6 +103,7 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
   mapping(bytes32 => Proposal) public proposal;
   mapping(bytes32 => bool) public isDisputed;
   uint32 public defaultTtl = 10 minutes;
+  uint32 public defaultMaxOutstandingDisputes = 3;
 
   // Staking Pools (bond insurance)
   mapping(IERC20 => DAOraclePool) public pool;
@@ -225,7 +226,10 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
     require(proposal[proposalId].timestamp == 0, "duplicate proposal");
 
     Feed storage _feed = feed[relayed.feedId];
-    require(_feed.disputesOutstanding < 3, "feed ineligible for proposals");
+    require(
+      _feed.disputesOutstanding < defaultMaxOutstandingDisputes,
+      "feed ineligible for proposals"
+    );
     require(
       _feed.lastUpdated < relayed.timestamp,
       "must be later than most recent proposal"
@@ -378,6 +382,17 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
     onlyRole(MANAGER)
   {
     externalIdentifier = identifier;
+  }
+
+  /**
+   * @dev Update the global default maxOutstandingDisputes. Can only be called by managers.
+   * @param maxOutstandingDisputes The new maxOutstandingDisputes
+   */
+  function setMaxOutstandingDisputes(uint32 maxOutstandingDisputes)
+    external
+    onlyRole(MANAGER)
+  {
+    defaultMaxOutstandingDisputes = maxOutstandingDisputes;
   }
 
   /**
