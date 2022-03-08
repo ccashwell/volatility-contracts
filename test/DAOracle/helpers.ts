@@ -113,7 +113,7 @@ export async function setExternalIdentifier(
 	);
 }
 
-export async function setDefaultMaxOutstandingDisputes(
+export async function setMaxOutstandingDisputes(
 	daoracle: SkinnyDAOracle,
 	maxOutstandingDisputes?: BigNumberish,
 	as?: SignerWithAddress,
@@ -122,7 +122,7 @@ export async function setDefaultMaxOutstandingDisputes(
 	  daoracle = daoracle.connect(as);
 	}
   
-	return daoracle.setDefaultMaxOutstandingDisputes(
+	return daoracle.setMaxOutstandingDisputes(
 		maxOutstandingDisputes ?? parseEther("3")
 	);
 }
