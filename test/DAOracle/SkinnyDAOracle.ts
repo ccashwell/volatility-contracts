@@ -30,7 +30,7 @@ import {
   signProposal,
   setDefaultDisputePeriod,
   setExternalIdentifier,
-  setMaxOutstandingDisputes
+  setDefaultMaxOutstandingDisputes
 } from "./helpers";
 
 const signedProposal = async (
@@ -126,7 +126,7 @@ describe("SkinnyDAOracle", () => {
     });
 
 	it("correctly updates the defaultMaxOutstandingDisputes", async () => {
-		await setMaxOutstandingDisputes(daoracle, 5);
+		await setDefaultMaxOutstandingDisputes(daoracle, 5);
       expect(await daoracle.defaultMaxOutstandingDisputes()).to.equal(5);
     });
 

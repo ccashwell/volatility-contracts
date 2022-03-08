@@ -388,7 +388,7 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
    * @dev Update the global default maxOutstandingDisputes. Can only be called by managers.
    * @param maxOutstandingDisputes The new maxOutstandingDisputes
    */
-  function setMaxOutstandingDisputes(uint32 maxOutstandingDisputes)
+  function setDefaultMaxOutstandingDisputes(uint32 maxOutstandingDisputes)
     external
     onlyRole(MANAGER)
   {
