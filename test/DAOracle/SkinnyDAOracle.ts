@@ -5,7 +5,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 import {
   SkinnyDAOracle,
-  DAOraclePool,
+  StakingPool,
   RewardToken,
   VestingVault,
   SkinnyOptimisticOracleInterface,
@@ -23,10 +23,10 @@ import {
   giveDai,
   getProposal,
   DAI,
-  FEED_ID,
+  INDEX_ID,
   ORACLE,
   Proposal,
-  configureFeed,
+  configureIndex,
   signProposal,
   setDefaultDisputePeriod,
   setExternalIdentifier,
@@ -117,7 +117,7 @@ describe("SkinnyDAOracle", () => {
   describe("Global Configuration", () => {
     it("correctly updates the defaultDisputePeriod", async () => {
 		await setDefaultDisputePeriod(daoracle, 300);
-      expect(await daoracle.defaultTtl()).to.equal(300);
+      expect(await daoracle.defaultDisputePeriod()).to.equal(300);
     });
 
 	it("correctly updates the externalIdentifier", async () => {
@@ -132,56 +132,56 @@ describe("SkinnyDAOracle", () => {
 
   });
 
-  describe("Feed Configuration", () => {
-    it("correctly maps the feedId to the feed", async () => {
-      await configureFeed(daoracle);
-      expect((await daoracle.feed(FEED_ID)).bondToken).to.equal(DAI);
+  describe("Index Configuration", () => {
+    it("correctly maps the indexId to the index", async () => {
+      await configureIndex(daoracle);
+      expect((await daoracle.index(INDEX_ID)).bondToken).to.equal(DAI);
     });
 
     it("creates a new pool for the bond token", async () => {
       assert((await daoracle.pool(DAI)) == ethers.constants.AddressZero);
-      await configureFeed(daoracle);
+      await configureIndex(daoracle);
       expect(await daoracle.pool(DAI)).not.to.equal(
         ethers.constants.AddressZero
       );
     });
 
     it("uses the existing bond pool if available", async () => {
-      await configureFeed(daoracle);
+      await configureIndex(daoracle);
       const existingPool = await daoracle.pool(DAI);
       assert(existingPool != ethers.constants.AddressZero);
 
-      await configureFeed(daoracle);
+      await configureIndex(daoracle);
       expect(await daoracle.pool(DAI)).to.equal(existingPool);
     });
 
-    it("overwrites configs when a matching feed already exists", async () => {
+    it("overwrites configs when a matching index already exists", async () => {
       const [admin] = await ethers.getSigners();
 
-      await configureFeed(daoracle, admin, {
-        feedId: FEED_ID,
+      await configureIndex(daoracle, admin, {
+        indexId: INDEX_ID,
         bondToken: DAI,
         bondAmount: ethers.utils.parseEther("1"),
       });
 
       assert(
-        (await daoracle.feed(FEED_ID)).bondAmount.eq(
+        (await daoracle.index(INDEX_ID)).bondAmount.eq(
           ethers.utils.parseEther("1")
         )
       );
 
-      await configureFeed(daoracle, admin, {
-        feedId: FEED_ID,
+      await configureIndex(daoracle, admin, {
+        indexId: INDEX_ID,
         bondToken: DAI,
         bondAmount: ethers.utils.parseEther("100"),
       });
 
-      expect((await daoracle.feed(FEED_ID)).bondAmount).to.equal(
+      expect((await daoracle.index(INDEX_ID)).bondAmount).to.equal(
         ethers.utils.parseEther("100")
       );
     });
 
-    it("reverts when randos try to create feeds", async () => {
+    it("reverts when randos try to create indexes", async () => {
       const [admin, rando] = await ethers.getSigners();
 
       const [address, role] = await Promise.all([
@@ -189,27 +189,27 @@ describe("SkinnyDAOracle", () => {
         daoracle.MANAGER(),
       ]);
 
-      await expect(configureFeed(daoracle, rando)).to.be.revertedWith(
+      await expect(configureIndex(daoracle, rando)).to.be.revertedWith(
         `AccessControl: account ${address.toLowerCase()} is missing role ${role}`
       );
     });
   });
 
   describe("Relaying", () => {
-    let feedId: string;
+    let indexId: string;
 
     beforeEach(async () => {
-      feedId = ethers.utils.formatBytes32String(
+      indexId = ethers.utils.formatBytes32String(
         Buffer.from(ethers.utils.randomBytes(8)).toString("hex")
       );
-      await configureFeed(daoracle, undefined, { feedId });
+      await configureIndex(daoracle, undefined, { indexId });
       await increaseTime(1);
     });
 
     context("with a valid proposal", () => {
       it("is not reverted", async () => {
         const [us] = await ethers.getSigners();
-        const proposal = await getProposal({ feedId });
+        const proposal = await getProposal({ indexId });
 
         await expect(
           daoracle.relay(
@@ -222,9 +222,9 @@ describe("SkinnyDAOracle", () => {
 
       it("delivers the reporter's share of rewards into vesting", async () => {
         const [us] = await ethers.getSigners();
-        const proposal = await getProposal({ feedId });
+        const proposal = await getProposal({ indexId });
 
-        const { reporterAmount } = await daoracle.claimableRewards(feedId);
+        const { reporterAmount } = await daoracle.claimableRewards(indexId);
 
         await daoracle.relay(
           proposal,
@@ -241,10 +241,10 @@ describe("SkinnyDAOracle", () => {
 
       it("delivers the pool's share to the pool directly", async () => {
         const [us] = await ethers.getSigners();
-        const proposal = await getProposal({ feedId });
+        const proposal = await getProposal({ indexId });
 
         const prevBlock = await lastBlock();
-        const { poolAmount } = await daoracle.claimableRewards(feedId);
+        const { poolAmount } = await daoracle.claimableRewards(indexId);
 
         const poolAddress = await daoracle.pool(DAI);
         const poolBalance = await daiToken.balanceOf(poolAddress);
@@ -265,7 +265,7 @@ describe("SkinnyDAOracle", () => {
     context("with an invalid proposal", () => {
       it("reverts for a proposal not signed by us", async () => {
         const [us, notUs] = await ethers.getSigners();
-        const proposal = await getProposal({ feedId });
+        const proposal = await getProposal({ indexId });
 
         await expect(
           daoracle.relay(
@@ -278,7 +278,7 @@ describe("SkinnyDAOracle", () => {
 
       it("reverts for a proposal not signed by the reported signer", async () => {
         const [us, notUs] = await ethers.getSigners();
-        const proposal = await getProposal({ feedId });
+        const proposal = await getProposal({ indexId });
 
         await expect(
           daoracle.relay(
@@ -290,7 +290,7 @@ describe("SkinnyDAOracle", () => {
       });
 
       it("reverts for a proposal with an unrecoverable signature", async () => {
-        const proposal = await getProposal({ feedId });
+        const proposal = await getProposal({ indexId });
 
         await expect(
           daoracle.relay(
@@ -303,7 +303,7 @@ describe("SkinnyDAOracle", () => {
 
       it("reverts for a duplicate proposal", async () => {
         const [us] = await ethers.getSigners();
-        const proposal = await getProposal({ feedId });
+        const proposal = await getProposal({ indexId });
 
         const signed = await signedProposal(proposal);
 
@@ -317,9 +317,9 @@ describe("SkinnyDAOracle", () => {
 
       it("reverts for an earlier proposal", async () => {
         const [us] = await ethers.getSigners();
-        const firstProposal = await getProposal({ feedId });
+        const firstProposal = await getProposal({ indexId });
         const earlierProposal = await getProposal({
-          feedId,
+          indexId,
           timestamp: firstProposal.timestamp - 1,
         });
 
@@ -344,20 +344,20 @@ describe("SkinnyDAOracle", () => {
     describe("Disputing", () => {
       let proposal: Proposal;
       let proposalId: string;
-      let pool: DAOraclePool;
+      let pool: StakingPool;
 
       beforeEach(async () => {
         const [us, staker] = await ethers.getSigners();
 
         pool = (await ethers.getContractAt(
-          "DAOraclePool",
+          "StakingPool",
           await daoracle.pool(DAI)
-        )) as DAOraclePool;
+        )) as StakingPool;
 
         await daiToken.connect(staker).approve(pool.address, toUnits("5000"));
         await pool.connect(staker).mint(toUnits("5000"));
 
-        proposal = await getProposal({ feedId });
+        proposal = await getProposal({ indexId });
         proposalId = await daoracle._proposalId(
           proposal.timestamp,
           proposal.value,
@@ -414,7 +414,7 @@ describe("SkinnyDAOracle", () => {
 
           await expect(
             daoracleViaImpersonator.priceSettled(
-              feedId,
+              indexId,
               proposal.timestamp,
               proposal.data,
               {
@@ -454,7 +454,7 @@ describe("SkinnyDAOracle", () => {
 
           await expect(
             daoracleViaImpersonator.priceSettled(
-              feedId,
+              indexId,
               proposal.timestamp,
               proposal.data,
               {
@@ -476,28 +476,28 @@ describe("SkinnyDAOracle", () => {
     });
 
     describe("Rewards", () => {
-      let feedId: string;
+      let indexId: string;
 
       beforeEach(async () => {
-        feedId = ethers.utils.formatBytes32String(
+        indexId = ethers.utils.formatBytes32String(
           Buffer.from(ethers.utils.randomBytes(8)).toString("hex")
         );
-        await configureFeed(daoracle, undefined, { feedId });
+        await configureIndex(daoracle, undefined, { indexId });
       });
 
       context("before being claimed", () => {
         it("is 1x the drip reward after 1 second", async () => {
-          expect((await daoracle.claimableRewards(feedId)).total).to.equal(
-            (await daoracle.feed(feedId)).drop
+          expect((await daoracle.claimableRewards(indexId)).total).to.equal(
+            (await daoracle.index(indexId)).drop
           );
         });
 
         it("grows by N times the drip reward after N seconds", async () => {
           for (let seconds of [10, 20, 1 + Math.round(Math.random() * 60)]) {
-            const { lastUpdated } = await daoracle.feed(feedId);
+            const { lastUpdated } = await daoracle.index(indexId);
             await increaseTime(seconds);
-            expect((await daoracle.claimableRewards(feedId)).total).to.equal(
-              (await daoracle.feed(feedId)).drop.mul(
+            expect((await daoracle.claimableRewards(indexId)).total).to.equal(
+              (await daoracle.index(indexId)).drop.mul(
                 (await lastBlock()).timestamp - lastUpdated
               )
             );
@@ -507,7 +507,7 @@ describe("SkinnyDAOracle", () => {
 
       context("the relayer's share", () => {
         it("starts one tick above the floor", async () => {
-          const rewards = await daoracle.claimableRewards(feedId);
+          const rewards = await daoracle.claimableRewards(indexId);
           expect(rewards.reporterAmount).to.equal(
             rewards.total.mul(31).div(100)
           );
@@ -515,7 +515,7 @@ describe("SkinnyDAOracle", () => {
 
         it("is ten ticks higher at ten seconds", async () => {
           await increaseTime(10);
-          const rewards = await daoracle.claimableRewards(feedId);
+          const rewards = await daoracle.claimableRewards(indexId);
           expect(rewards.reporterAmount).to.equal(
             rewards.total.mul(40).div(100)
           );
@@ -523,13 +523,13 @@ describe("SkinnyDAOracle", () => {
 
         it("hits the ceiling at twenty seconds", async () => {
           await increaseTime(20);
-          const rewards = await daoracle.claimableRewards(feedId);
+          const rewards = await daoracle.claimableRewards(indexId);
           expect(rewards.reporterAmount).to.equal(rewards.total.div(2));
         });
 
         it("stops at the ceiling", async () => {
           await increaseTime(100);
-          const rewards = await daoracle.claimableRewards(feedId);
+          const rewards = await daoracle.claimableRewards(indexId);
           expect(rewards.reporterAmount).to.equal(rewards.total.div(2));
         });
       });
@@ -541,7 +541,7 @@ describe("SkinnyDAOracle", () => {
             reporterAmount,
             residualAmount,
             total,
-          } = await daoracle.claimableRewards(feedId);
+          } = await daoracle.claimableRewards(indexId);
 
           expect(poolAmount).to.equal(
             total.sub(reporterAmount).sub(residualAmount)
@@ -554,7 +554,7 @@ describe("SkinnyDAOracle", () => {
             poolAmount,
             reporterAmount,
             total,
-          } = await daoracle.claimableRewards(feedId);
+          } = await daoracle.claimableRewards(indexId);
           expect(poolAmount).to.equal(
             total.sub(reporterAmount).mul(99).div(100)
           );
@@ -566,7 +566,7 @@ describe("SkinnyDAOracle", () => {
           const {
             poolAmount,
             residualAmount,
-          } = await daoracle.claimableRewards(feedId);
+          } = await daoracle.claimableRewards(indexId);
 
           expect(residualAmount).to.equal(
             poolAmount.add(residualAmount).div(100)
@@ -575,15 +575,15 @@ describe("SkinnyDAOracle", () => {
 
         it("is immediately delivered to the methodologist", async () => {
           const [us, methodologist] = await ethers.getSigners();
-          const feedId = ethers.utils.formatBytes32String("DUDE-1m-WTF");
+          const indexId = ethers.utils.formatBytes32String("DUDE-1m-WTF");
 
-          await configureFeed(daoracle, undefined, {
-            feedId,
-            hat: methodologist.address,
+          await configureIndex(daoracle, undefined, {
+            indexId,
+            creatorAddress: methodologist.address,
           });
           await increaseTime(1);
 
-          const proposal = await getProposal({ feedId });
+          const proposal = await getProposal({ indexId });
           await expect(async () =>
             daoracle.relay(
               proposal,
@@ -593,7 +593,7 @@ describe("SkinnyDAOracle", () => {
           ).to.changeTokenBalance(
             daiToken,
             methodologist,
-            (await daoracle.claimableRewards(feedId)).residualAmount
+            (await daoracle.claimableRewards(indexId)).residualAmount
           );
         });
       });

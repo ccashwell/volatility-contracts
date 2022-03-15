@@ -8,7 +8,7 @@ import "./ManagedPool.sol";
 import "./Slashable.sol";
 
 /**
- * @title DAOraclePool
+ * @title StakingPool
  * @dev The DAOracle Network relies on decentralized risk pools. This is a
  * simple implementation of a staking pool which wraps a single arbitrary token
  * and provides a mechanism for recouping losses incurred by the deployer of
@@ -17,7 +17,7 @@ import "./Slashable.sol";
  * proportional to their stake on the underlying token balance of the pool. Any
  * rewards or penalties applied to the pool will thus impact all holders.
  */
-contract DAOraclePool is ERC20, ERC20Permit, ManagedPool, Slashable {
+contract StakingPool is ERC20, ERC20Permit, ManagedPool, Slashable {
   using SafeERC20 for IERC20;
 
   constructor(
@@ -27,10 +27,10 @@ contract DAOraclePool is ERC20, ERC20Permit, ManagedPool, Slashable {
     address _feePayee
   )
     ERC20(
-      _concat("DAOraclePool: ", _token.name()),
+      _concat("StakingPool: ", _token.name()),
       _concat("dp", _token.symbol())
     )
-    ERC20Permit(_concat("DAOraclePool: ", _token.name()))
+    ERC20Permit(_concat("StakingPool: ", _token.name()))
   {
     stakedToken = IERC20(_token);
     mintFee = _mintFee;
