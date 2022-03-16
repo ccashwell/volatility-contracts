@@ -103,6 +103,7 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
   mapping(bytes32 => Proposal) public proposal;
   mapping(bytes32 => bool) public isDisputed;
   uint32 public defaultDisputePeriod = 10 minutes;
+  uint32 public maxOutstandingDisputes = 3;
 
   // Staking Pools (bond insurance)
   mapping(IERC20 => StakingPool) public pool;
@@ -383,6 +384,17 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
     onlyRole(MANAGER)
   {
     externalIdentifier = identifier;
+  }
+
+  /**
+   * @dev Update the global default maxOutstandingDisputes. Can only be called by managers.
+   * @param outstandingDisputes The new maxOutstandingDisputes
+   */
+  function setMaxOutstandingDisputes(uint32 outstandingDisputes)
+    external
+    onlyRole(MANAGER)
+  {
+    maxOutstandingDisputes = outstandingDisputes;
   }
 
   /**
