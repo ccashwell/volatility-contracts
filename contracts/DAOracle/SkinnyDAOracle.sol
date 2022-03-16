@@ -10,14 +10,14 @@ import "../vendor/uma/SkinnyOptimisticOracleInterface.sol";
 
 import "./DAOracleHelpers.sol";
 import "./vault/IVestingVault.sol";
-import "./pool/DAOraclePool.sol";
-import "./pool/FundingPool.sol";
+import "./pool/StakingPool.sol";
+import "./pool/SponsorPool.sol";
 
 /**
  * @title SkinnyDAOracle
  * @dev This contract is the core of the Volatility Protocol DAOracle System.
  * It is responsible for rewarding stakers and issuing staker-backed bonds
- * which act as a decentralized risk pool for DAOracle Feeds. Bonds and rewards
+ * which act as a decentralized risk pool for DAOracle Indexes. Bonds and rewards
  * are authorized, issued and funded by the Volatility DAO for qualified oracle
  * proposals, and stakers provide insurance against lost bonds. In exchange for
  * backstopping risk, stakers receive rewards for the data assurances they help
@@ -27,10 +27,10 @@ import "./pool/FundingPool.sol";
  */
 contract SkinnyDAOracle is AccessControl, EIP712 {
   using SafeERC20 for IERC20;
-  using DAOracleHelpers for Feed;
+  using DAOracleHelpers for Index;
 
   event Relayed(
-    bytes32 indexed feedId,
+    bytes32 indexed indexId,
     bytes32 indexed proposalId,
     Proposal proposal,
     address relayer,
@@ -38,23 +38,23 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
   );
 
   event Disputed(
-    bytes32 indexed feedId,
+    bytes32 indexed indexId,
     bytes32 indexed proposalId,
     address disputer
   );
 
   event Settled(
-    bytes32 indexed feedId,
+    bytes32 indexed indexId,
     bytes32 indexed proposalId,
     int256 proposedValue,
     int256 settledValue
   );
 
-  event FeedConfigured(bytes32 indexed feedId, IERC20 bondToken);
+  event IndexConfigured(bytes32 indexed indexId, IERC20 bondToken);
   event Rewarded(address rewardee, IERC20 token, uint256 amount);
 
   /**
-   * @dev Feeds are backed by bonds which are insured by stakers who receive
+   * @dev Indexes are backed by bonds which are insured by stakers who receive
    * rewards for backstopping the risk of those bonds being slashed. The reward
    * token is the same as the bond token for simplicity. Whenever a bond is
    * resolved, any delta between the initial bond amount and tokens received is
@@ -62,7 +62,7 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
    * two groups: Stakers and Reporters. Every time targetFrequency elapses, the
    * weight shifts from Stakers to Reporters until it reaches the stakerFloor.
    */
-  struct Feed {
+  struct Index {
     IERC20 bondToken; // The token to be used for bonds
     uint32 lastUpdated; // The timestamp of the last successful update
     uint256 bondAmount; // The quantity of tokens to be put up for each bond
@@ -72,20 +72,20 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
     uint64 floor; // The minimum reward weighting for reporters (in wei, 1e18 = 100%)
     uint64 ceiling; // The maximum reward weighting for reporters (in wei, 1e18 = 100%)
     uint64 tilt; // The rate of change per second from floor->ceiling (in wei, 1e18 = 100%)
-    uint64 tip; // The percentage of the total reward payable to the methodologist
-    uint32 ttl; // The dispute window for proposed values
-    address hat; // The recipient of the methodologist rewards
-    address backer; // The source of funding for the feed's bonds and rewards
+    uint64 creatorAmount; // The percentage of the total reward payable to the methodologist
+    uint32 disputePeriod; // The dispute window for proposed values
+    address creatorAddress; // The recipient of the methodologist rewards
+    address sponsor; // The source of funding for the index's bonds and rewards
   }
 
   /**
-   * @dev Proposals are used to validate feed updates to be relayed to the UMA
+   * @dev Proposals are used to validate index updates to be relayed to the UMA
    * OptimisticOracle. The ancillaryData field supports arbitrary byte arrays,
    * but we are compressing down to bytes32 which exceeds the capacity needed
    * for all currently known use cases.
    */
   struct Proposal {
-    bytes32 feedId; // The feed identifier
+    bytes32 indexId; // The index identifier
     uint32 timestamp; // The timestamp of the value
     int256 value; // The proposed value
     bytes32 data; // Any other data needed to reproduce the proposed value
@@ -98,14 +98,15 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
   // Vesting Vault (for Rewards)
   IVestingVault public immutable vault;
 
-  // Feeds and Proposals
-  mapping(bytes32 => Feed) public feed;
+  // Indexes and Proposals
+  mapping(bytes32 => Index) public index;
   mapping(bytes32 => Proposal) public proposal;
   mapping(bytes32 => bool) public isDisputed;
-  uint32 public defaultTtl = 10 minutes;
+  uint32 public defaultDisputePeriod = 10 minutes;
+  uint32 public maxOutstandingDisputes = 3;
 
   // Staking Pools (bond insurance)
-  mapping(IERC20 => DAOraclePool) public pool;
+  mapping(IERC20 => StakingPool) public pool;
 
   // Roles (for AccessControl)
   bytes32 public constant ORACLE = keccak256("ORACLE");
@@ -116,7 +117,7 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
   bytes32 public constant PROPOSAL_TYPEHASH =
     keccak256(
       abi.encodePacked(
-        "Proposal(bytes32 feedId,uint32 timestamp,int256 value,bytes32 data)"
+        "Proposal(bytes32 indexId,uint32 timestamp,int256 value,bytes32 data)"
       )
     );
 
@@ -140,7 +141,7 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
           keccak256(
             abi.encode(
               PROPOSAL_TYPEHASH,
-              relayed.feedId,
+              relayed.indexId,
               relayed.timestamp,
               relayed.value,
               relayed.data
@@ -173,15 +174,15 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
   }
 
   /**
-   * @dev Returns the currently claimable rewards for a given feed.
-   * @param feedId The feed identifier
+   * @dev Returns the currently claimable rewards for a given index.
+   * @param indexId The index identifier
    * @return total The total reward token amount
    * @return poolAmount The pool's share of the rewards
    * @return reporterAmount The reporter's share of the rewards
    * @return residualAmount The methodologist's share of the rewards
    * @return vestingTime The amount of time the reporter's rewards must vest (in seconds)
    */
-  function claimableRewards(bytes32 feedId)
+  function claimableRewards(bytes32 indexId)
     public
     view
     returns (
@@ -192,11 +193,11 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
       uint256 vestingTime
     )
   {
-    return feed[feedId].claimableRewards();
+    return index[indexId].claimableRewards();
   }
 
   /**
-   * @dev Relay a feed update that has been signed by an authorized proposer.
+   * @dev Relay an index update that has been signed by an authorized proposer.
    * The signature provided must satisfy two criteria:
    * (1) the signature must be a valid EIP-712 signature for the proposal; and
    * (2) the signer must have the "PROPOSER" role.
@@ -224,21 +225,21 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
     proposalId = _proposalId(relayed.timestamp, relayed.value, relayed.data);
     require(proposal[proposalId].timestamp == 0, "duplicate proposal");
 
-    Feed storage _feed = feed[relayed.feedId];
-    require(_feed.disputesOutstanding < 3, "feed ineligible for proposals");
+    Index storage _index = index[relayed.indexId];
+    require(_index.disputesOutstanding < 3, "index ineligible for proposals");
     require(
-      _feed.lastUpdated < relayed.timestamp,
+      _index.lastUpdated < relayed.timestamp,
       "must be later than most recent proposal"
     );
 
-    bond = _feed.bondAmount;
-    expiresAt = uint32(block.timestamp) + _feed.ttl;
+    bond = _index.bondAmount;
+    expiresAt = uint32(block.timestamp) + _index.disputePeriod;
 
     proposal[proposalId] = relayed;
-    _feed.lastUpdated = relayed.timestamp;
+    _index.lastUpdated = relayed.timestamp;
 
-    _issueRewards(relayed.feedId, msg.sender);
-    emit Relayed(relayed.feedId, proposalId, relayed, msg.sender, bond);
+    _issueRewards(relayed.indexId, msg.sender);
+    emit Relayed(relayed.indexId, proposalId, relayed, msg.sender, bond);
   }
 
   /**
@@ -254,18 +255,18 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
    */
   function dispute(bytes32 proposalId) external {
     Proposal storage _proposal = proposal[proposalId];
-    Feed storage _feed = feed[_proposal.feedId];
+    Index storage _index = index[_proposal.indexId];
 
     require(proposal[proposalId].timestamp != 0, "proposal doesn't exist");
     require(
       !isDisputed[proposalId] &&
-        block.timestamp < proposal[proposalId].timestamp + _feed.ttl,
+        block.timestamp < proposal[proposalId].timestamp + _index.disputePeriod,
       "proposal already disputed or expired"
     );
     isDisputed[proposalId] = true;
 
-    _feed.dispute(_proposal, oracle, externalIdentifier);
-    emit Disputed(_proposal.feedId, proposalId, msg.sender);
+    _index.dispute(_proposal, oracle, externalIdentifier);
+    emit Disputed(_proposal.indexId, proposalId, msg.sender);
   }
 
   /**
@@ -289,18 +290,18 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
       bytes32(ancillaryData)
     );
     Proposal storage relayed = proposal[id];
-    Feed storage _feed = feed[relayed.feedId];
+    Index storage _index = index[relayed.indexId];
 
-    _feed.bondsOutstanding -= request.bond;
-    _feed.disputesOutstanding--;
+    _index.bondsOutstanding -= request.bond;
+    _index.disputesOutstanding--;
     isDisputed[id] = false;
 
     if (relayed.value != request.resolvedPrice) {
       // failed proposal, slash pool to recoup lost bond
-      pool[request.currency].slash(_feed.bondAmount, address(this));
+      pool[request.currency].slash(_index.bondAmount, address(this));
     } else {
-      // successful proposal, return bond to backer
-      request.currency.safeTransfer(_feed.backer, request.bond);
+      // successful proposal, return bond to sponsor
+      request.currency.safeTransfer(_index.sponsor, request.bond);
 
       // sends the rest of the funds received to the staking pool
       request.currency.safeTransfer(
@@ -309,68 +310,73 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
       );
     }
 
-    emit Settled(relayed.feedId, id, relayed.value, request.resolvedPrice);
+    emit Settled(relayed.indexId, id, relayed.value, request.resolvedPrice);
   }
 
   /**
-   * @dev Adds or updates a feed. Can only be called by managers.
+   * @dev Adds or updates a index. Can only be called by managers.
    * @param bondToken The token to be used for bonds
    * @param bondAmount The quantity of tokens to offer for bonds
-   * @param feedId The price feed identifier
-   * @param ttl The proposal dispute window
+   * @param indexId The price index identifier
+   * @param disputePeriod The proposal dispute window
    * @param floor The starting portion of rewards payable to reporters
    * @param ceiling The maximum portion of rewards payable to reporters
    * @param tilt The rate of change from floor to ceiling per second
    * @param drop The number of reward tokens to drip (per second)
-   * @param tip The portion of rewards payable to the methodologist
-   * @param hat The recipient of the methodologist's rewards
-   * @param backer The provider of funding for bonds and rewards
+   * @param creatorAmount The portion of rewards payable to the methodologist
+   * @param creatorAddress The recipient of the methodologist's rewards
+   * @param sponsor The provider of funding for bonds and rewards
    */
-  function configureFeed(
+  function configureIndex(
     IERC20 bondToken,
     uint256 bondAmount,
-    bytes32 feedId,
-    uint32 ttl,
+    bytes32 indexId,
+    uint32 disputePeriod,
     uint64 floor,
     uint64 ceiling,
     uint64 tilt,
     uint256 drop,
-    uint64 tip,
-    address hat,
-    address backer
+    uint64 creatorAmount,
+    address creatorAddress,
+    address sponsor
   ) external onlyRole(MANAGER) {
-    Feed storage _feed = feed[feedId];
+    Index storage _index = index[indexId];
 
-    _feed.bondToken = bondToken;
-    _feed.bondAmount = bondAmount;
-    _feed.lastUpdated = _feed.lastUpdated == 0
+    _index.bondToken = bondToken;
+    _index.bondAmount = bondAmount;
+    _index.lastUpdated = _index.lastUpdated == 0
       ? uint32(block.timestamp)
-      : _feed.lastUpdated;
+      : _index.lastUpdated;
 
-    _feed.drop = drop;
-    _feed.ceiling = ceiling;
-    _feed.tilt = tilt;
-    _feed.floor = floor;
-    _feed.tip = tip;
-    _feed.hat = hat;
-    _feed.ttl = ttl == 0 ? defaultTtl : ttl;
-    _feed.backer = backer == address(0)
-      ? address(_feed.deployFundingPool())
-      : backer;
+    _index.drop = drop;
+    _index.ceiling = ceiling;
+    _index.tilt = tilt;
+    _index.floor = floor;
+    _index.creatorAmount = creatorAmount;
+    _index.creatorAddress = creatorAddress;
+    _index.disputePeriod = disputePeriod == 0
+      ? defaultDisputePeriod
+      : disputePeriod;
+    _index.sponsor = sponsor == address(0)
+      ? address(_index.deploySponsorPool())
+      : sponsor;
 
     if (address(pool[bondToken]) == address(0)) {
-      _createPool(_feed);
+      _createPool(_index);
     }
 
-    emit FeedConfigured(feedId, bondToken);
+    emit IndexConfigured(indexId, bondToken);
   }
 
   /**
-   * @dev Update the global default TTL. Can only be called by managers.
-   * @param ttl The new ttl, in seconds
+   * @dev Update the global default disputePeriod. Can only be called by managers.
+   * @param disputePeriod The new disputePeriod, in seconds
    */
-  function setDefaultTtl(uint32 ttl) external onlyRole(MANAGER) {
-    defaultTtl = ttl;
+  function setdefaultDisputePeriod(uint32 disputePeriod)
+    external
+    onlyRole(MANAGER)
+  {
+    defaultDisputePeriod = disputePeriod;
   }
 
   function setExternalIdentifier(bytes32 identifier)
@@ -378,6 +384,17 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
     onlyRole(MANAGER)
   {
     externalIdentifier = identifier;
+  }
+
+  /**
+   * @dev Update the global default maxOutstandingDisputes. Can only be called by managers.
+   * @param outstandingDisputes The new maxOutstandingDisputes
+   */
+  function setMaxOutstandingDisputes(uint32 outstandingDisputes)
+    external
+    onlyRole(MANAGER)
+  {
+    maxOutstandingDisputes = outstandingDisputes;
   }
 
   /**
@@ -404,22 +421,22 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
     return keccak256(abi.encodePacked(timestamp, value, data));
   }
 
-  function _createPool(Feed storage _feed) internal returns (DAOraclePool) {
-    pool[_feed.bondToken] = new DAOraclePool(
-      ERC20(address(_feed.bondToken)),
+  function _createPool(Index storage _index) internal returns (StakingPool) {
+    pool[_index.bondToken] = new StakingPool(
+      ERC20(address(_index.bondToken)),
       0,
       0,
       address(this)
     );
 
-    _feed.bondToken.safeApprove(address(vault), 2**256 - 1);
-    _feed.bondToken.safeApprove(address(oracle), 2**256 - 1);
+    _index.bondToken.safeApprove(address(vault), 2**256 - 1);
+    _index.bondToken.safeApprove(address(oracle), 2**256 - 1);
 
-    return pool[_feed.bondToken];
+    return pool[_index.bondToken];
   }
 
-  function _issueRewards(bytes32 feedId, address reporter) internal {
-    Feed storage _feed = feed[feedId];
+  function _issueRewards(bytes32 indexId, address reporter) internal {
+    Index storage _index = index[indexId];
 
     (
       uint256 total,
@@ -427,25 +444,25 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
       uint256 reporterAmount,
       uint256 residualAmount,
       uint256 vestingTime
-    ) = _feed.claimableRewards();
+    ) = _index.claimableRewards();
 
-    // Pull in reward money from the backer
-    _feed.bondToken.safeTransferFrom(_feed.backer, address(this), total);
+    // Pull in reward money from the sponsor
+    _index.bondToken.safeTransferFrom(_index.sponsor, address(this), total);
 
     // Push rewards to pool and methodologist
-    _feed.bondToken.safeTransfer(address(pool[_feed.bondToken]), poolAmount);
-    _feed.bondToken.safeTransfer(_feed.hat, residualAmount);
+    _index.bondToken.safeTransfer(address(pool[_index.bondToken]), poolAmount);
+    _index.bondToken.safeTransfer(_index.creatorAddress, residualAmount);
 
     // Push relayer's reward to the vault for vesting
     vault.issue(
       reporter,
-      _feed.bondToken,
+      _index.bondToken,
       reporterAmount,
       block.timestamp,
       0,
       vestingTime
     );
 
-    emit Rewarded(reporter, _feed.bondToken, reporterAmount);
+    emit Rewarded(reporter, _index.bondToken, reporterAmount);
   }
 }
