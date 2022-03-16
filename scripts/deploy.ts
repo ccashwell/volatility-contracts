@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 
 const SKINNY_OO_ADDRESS = "0x4060dba72344da74edaeeae51a71a57f7e96b6b4";
 const VOL_TOKEN_ADDRESS = "0x5166e09628b696285e3a151e84fb977736a83575";
-const OO_FEED_ID = ethers.utils.formatBytes32String("ethVIX");
+const OO_FEED_ID = ethers.utils.formatBytes32String("VolatilityDAOracle");
 
 async function main() {
   // 1) Deploy the VestingVault

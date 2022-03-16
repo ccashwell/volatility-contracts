@@ -16,7 +16,7 @@ import {
 export const DAI = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
 export const DAI_WARD = "0x9759A6Ac90977b93B58547b4A71c78317f391A28";
 export const ORACLE = "0x4060dba72344da74edaeeae51a71a57f7e96b6b4";
-export const FEED_ID = hre.ethers.utils.formatBytes32String("MFIV.14D.ETH");
+export const INDEX_ID = hre.ethers.utils.formatBytes32String("MFIV-14D-ETH");
 
 export async function giveDai(receivers: string[], amount = toUnits(100000)) {
   const daiMinter = "0x9759A6Ac90977b93B58547b4A71c78317f391A28";
@@ -31,7 +31,7 @@ export async function giveDai(receivers: string[], amount = toUnits(100000)) {
 }
 
 export type Proposal = {
-  feedId: string;
+  indexId: string;
   timestamp: number;
   value: number;
   data: string;
@@ -40,49 +40,91 @@ export type Proposal = {
 export async function getProposal(
   options: Partial<Proposal> = {}
 ): Promise<Proposal> {
-  let { feedId, timestamp, value, data } = options;
+  let { indexId, timestamp, value, data } = options;
   return {
-    feedId: feedId ?? FEED_ID,
+    indexId: indexId ?? INDEX_ID,
     timestamp: timestamp ?? (await lastBlock()).timestamp,
     value: value ?? Math.round(Math.random() * 250),
-    data: data ?? hre.ethers.utils.formatBytes32String(`id:MF4-14D-ETH`),
+    data: data ?? hre.ethers.utils.formatBytes32String(`id:MFIV-14D-ETH`),
   };
 }
 
-export async function configureFeed(
+export async function configureIndex(
   daoracle: SkinnyDAOracle,
   as?: SignerWithAddress,
   config?: {
     bondToken?: string;
     bondAmount?: BigNumberish;
-    feedId?: string;
-    ttl?: BigNumberish;
+    indexId?: string;
+    disputePeriod?: BigNumberish;
     floor?: BigNumberish;
     ceiling?: BigNumberish;
     tilt?: BigNumberish;
     drop?: BigNumberish;
-    tip?: BigNumberish;
-    hat?: string;
-    backer?: string;
+    creatorAmount?: BigNumberish;
+    creatorAddress?: string;
+    sponsor?: string;
   }
 ): Promise<ContractTransaction> {
   if (as) {
     daoracle = daoracle.connect(as);
   }
 
-  return daoracle.configureFeed(
+  return daoracle.configureIndex(
     config?.bondToken ?? DAI, // bondToken = DAI
     config?.bondAmount ?? parseEther("1"), // bondAmount = 1 DAI
-    config?.feedId ?? FEED_ID, // feedId = bytes32("MFIV")
-    config?.ttl ?? 600, // ttl = 600 seconds
+    config?.indexId ?? INDEX_ID, // indexId = bytes32("MFIV")
+    config?.disputePeriod ?? 600, // disputePeriod = 600 seconds
     config?.floor ?? parseEther("0.3"), // reporter floor = 30%
     config?.ceiling ?? parseEther("0.5"), // reporter ceiling = 50%
     config?.tilt ?? parseEther("0.01"), // change rate = 1%/sec
     config?.drop ?? parseEther("1"), // drip = 1 DAI/sec
-    config?.tip ?? parseEther("0.01"), // tip = 1% of pool reward
-    config?.hat ?? hre.ethers.constants.AddressZero,
-    config?.backer ?? daoracle.address
+    config?.creatorAmount ?? parseEther("0.01"), // creatorAmount = 1% of pool reward
+    config?.creatorAddress ?? hre.ethers.constants.AddressZero,
+    config?.sponsor ?? daoracle.address
   );
+}
+
+export async function setDefaultDisputePeriod(
+	daoracle: SkinnyDAOracle,
+	defaultDisputePeriod?: BigNumberish,
+	as?: SignerWithAddress,
+  ): Promise<ContractTransaction> {
+	if (as) {
+	  daoracle = daoracle.connect(as);
+	}
+  
+	return daoracle.setdefaultDisputePeriod(
+		defaultDisputePeriod ?? parseEther("3")
+	);
+}
+
+export async function setExternalIdentifier(
+	daoracle: SkinnyDAOracle,
+	externalIdentifier?: string,
+	as?: SignerWithAddress,
+  ): Promise<ContractTransaction> {
+	if (as) {
+	  daoracle = daoracle.connect(as);
+	}
+  
+	return daoracle.setExternalIdentifier(
+		externalIdentifier ?? hre.ethers.utils.formatBytes32String("VolatilityDAOracle")
+	);
+}
+
+export async function setMaxOutstandingDisputes(
+	daoracle: SkinnyDAOracle,
+	maxOutstandingDisputes?: BigNumberish,
+	as?: SignerWithAddress,
+  ): Promise<ContractTransaction> {
+	if (as) {
+	  daoracle = daoracle.connect(as);
+	}
+  
+	return daoracle.setMaxOutstandingDisputes(
+		maxOutstandingDisputes ?? parseEther("3")
+	);
 }
 
 export const signProposal = async (
@@ -109,14 +151,14 @@ export const signProposal = async (
     },
     {
       Proposal: [
-        { name: "feedId", type: "bytes32" },
+        { name: "indexId", type: "bytes32" },
         { name: "timestamp", type: "uint32" },
         { name: "value", type: "int256" },
         { name: "data", type: "bytes32" },
       ],
     },
     {
-      feedId: proposal.feedId,
+		indexId: proposal.indexId,
       timestamp: proposal.timestamp,
       value: proposal.value,
       data: proposal.data,
