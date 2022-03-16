@@ -109,7 +109,7 @@ export async function setExternalIdentifier(
 	}
   
 	return daoracle.setExternalIdentifier(
-		externalIdentifier ?? hre.ethers.utils.formatBytes32String("ethVIX")
+		externalIdentifier ?? hre.ethers.utils.formatBytes32String("VolatilityDAOracle")
 	);
 }
 
