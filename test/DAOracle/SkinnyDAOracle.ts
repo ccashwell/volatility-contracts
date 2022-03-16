@@ -28,6 +28,9 @@ import {
   Proposal,
   configureIndex,
   signProposal,
+  setDefaultDisputePeriod,
+  setExternalIdentifier,
+  setMaxOutstandingDisputes
 } from "./helpers";
 
 const signedProposal = async (
@@ -109,6 +112,24 @@ describe("SkinnyDAOracle", () => {
         )
       ).to.be.true;
     });
+  });
+
+  describe("Global Configuration", () => {
+    it("correctly updates the defaultDisputePeriod", async () => {
+		await setDefaultDisputePeriod(daoracle, 300);
+      expect(await daoracle.defaultDisputePeriod()).to.equal(300);
+    });
+
+	it("correctly updates the externalIdentifier", async () => {
+		await setExternalIdentifier(daoracle, ethers.utils.formatBytes32String("volDAOracle"));
+      expect(await daoracle.externalIdentifier()).to.equal(ethers.utils.formatBytes32String("volDAOracle"));
+    });
+
+	it("correctly updates the maxOutstandingDisputes", async () => {
+		await setMaxOutstandingDisputes(daoracle, 5);
+      expect(await daoracle.maxOutstandingDisputes()).to.equal(5);
+    });
+
   });
 
   describe("Index Configuration", () => {
