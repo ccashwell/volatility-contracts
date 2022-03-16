@@ -68,7 +68,7 @@ describe("SkinnyDAOracle", () => {
 
     daiToken = (await ethers.getContractAt("RewardToken", DAI)) as RewardToken;
     daoracle = (await SkinnyDAOracleFactory.deploy(
-      ethers.utils.formatBytes32String("ethVIX"),
+      ethers.utils.formatBytes32String("VolatilityDAOracle"),
       oracle.address,
       vault.address
     )) as SkinnyDAOracle;
