@@ -9,6 +9,8 @@ The Volatility DAOracle is a collection of methodologies and implementations for
 * `timestamp`: timestamp of the data snapshot to identify the existing request.
 * `ancillaryData`: ancillary data of the price being requested.
 
+You can [learn more about The Volatility DAOracle here](https://volatilityprotocol.gitbook.io/volatility-pr/).
+
 ### Ethereum Mainnet Contracts
 | Contract Name | Address | Etherscan |
 | --- | --- | --- |
