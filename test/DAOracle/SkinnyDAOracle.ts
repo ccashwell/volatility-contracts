@@ -210,7 +210,7 @@ describe("SkinnyDAOracle", () => {
       it("is not reverted", async () => {
         const [us] = await ethers.getSigners();
         const proposal = await getProposal({ indexId });
-
+		
         await expect(
           daoracle.relay(
             proposal,
