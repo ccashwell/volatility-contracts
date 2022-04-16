@@ -226,7 +226,10 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
     require(proposal[proposalId].timestamp == 0, "duplicate proposal");
 
     Index storage _index = index[relayed.indexId];
-    require(_index.disputesOutstanding < 3, "index ineligible for proposals");
+    require(
+      _index.disputesOutstanding <= maxOutstandingDisputes,
+      "index ineligible for proposals"
+    );
     require(
       _index.lastUpdated < relayed.timestamp,
       "must be later than most recent proposal"
