@@ -1,7 +1,9 @@
 import { ethers } from "hardhat";
 
-const SKINNY_OO_ADDRESS = "0x4060dba72344da74edaeeae51a71a57f7e96b6b4";
-const VOL_TOKEN_ADDRESS = "0x5166e09628b696285e3a151e84fb977736a83575";
+//const SKINNY_OO_ADDRESS = "0x4060dba72344da74edaeeae51a71a57f7e96b6b4";
+//const VOL_TOKEN_ADDRESS = "0x5166e09628b696285e3a151e84fb977736a83575";
+const rSKINNY_OO_ADDRESS = "0xAbE04Ace666294aefD65F991d78CE9F9218aFC67";
+const rDAI_TOKEN_ADDRESS = "0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735";
 const OO_FEED_ID = ethers.utils.formatBytes32String("VolatilityDAOracle");
 
 async function main() {
@@ -24,14 +26,14 @@ async function main() {
         DAOracleHelpers: helpersLib.address,
       },
     })
-  ).deploy(OO_FEED_ID, SKINNY_OO_ADDRESS, vault.address);
+  ).deploy(OO_FEED_ID, rSKINNY_OO_ADDRESS, vault.address);
   console.log("SkinnyDAOracle deployed to:", daoracle.address);
 
-  // 3a) Deploy a FundingPool (this is technically optional, but useful)
-  const backer = await (await ethers.getContractFactory("FundingPool")).deploy(
-    VOL_TOKEN_ADDRESS
+  // 3a) Deploy a SponsorPool (this is technically optional, but useful)
+  const backer = await (await ethers.getContractFactory("SponsorPool")).deploy(
+    rDAI_TOKEN_ADDRESS
   );
-  console.log("FundingPool deployed to:", backer.address);
+  console.log("SponsorPool deployed to:", backer.address);
 
   // 4) Configure a feed
   // await daoracle.configureFeed(

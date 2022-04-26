@@ -239,9 +239,10 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
     expiresAt = uint32(block.timestamp) + _index.disputePeriod;
 
     proposal[proposalId] = relayed;
-    _index.lastUpdated = relayed.timestamp;
-
     _issueRewards(relayed.indexId, msg.sender);
+    
+    
+    _index.lastUpdated = relayed.timestamp;
     emit Relayed(relayed.indexId, proposalId, relayed, msg.sender, bond);
   }
 
