@@ -53,7 +53,7 @@ library DAOracleHelpers {
     uint256 bond = oracle.requestAndProposePriceFor(
       externalIdentifier,
       proposal.timestamp,
-      abi.encodePacked(bytes15(proposal.data)),
+      abi.encodePacked(proposal.data),
       token,
       0,
       index.bondAmount,
@@ -76,7 +76,7 @@ library DAOracleHelpers {
     oracle.disputePriceFor(
       externalIdentifier,
       proposal.timestamp,
-      abi.encodePacked(bytes15(proposal.data)),
+      abi.encodePacked(proposal.data),
       request,
       msg.sender,
       address(this)
