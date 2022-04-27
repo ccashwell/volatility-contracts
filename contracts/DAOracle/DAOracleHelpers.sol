@@ -14,8 +14,8 @@ library DAOracleHelpers {
       uint256 total,
       uint256 poolAmount,
       uint256 reporterAmount,
-      uint256 residualAmount,
-      uint256 vestingTime
+      uint256 residualAmount
+    //  uint256 vestingTime
     )
   {
     // multiplier = distance between last proposal and current time (in seconds)
@@ -32,7 +32,7 @@ library DAOracleHelpers {
     reporterAmount = (total * reporterShare) / 1e18;
     residualAmount = ((total - reporterAmount) * index.creatorAmount) / 1e18;
     poolAmount = total - residualAmount - reporterAmount;
-    vestingTime = 0;
+   // vestingTime = 0;
   }
 
   function dispute(

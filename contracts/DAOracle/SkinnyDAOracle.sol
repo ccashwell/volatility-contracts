@@ -98,6 +98,9 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
   // Vesting Vault (for Rewards)
   IVestingVault public immutable vault;
 
+  //VestingTime
+  uint32 public maxVestingTime = 10 minutes;
+
   // Indexes and Proposals
   mapping(bytes32 => Index) public index;
   mapping(bytes32 => Proposal) public proposal;
@@ -180,7 +183,6 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
    * @return poolAmount The pool's share of the rewards
    * @return reporterAmount The reporter's share of the rewards
    * @return residualAmount The methodologist's share of the rewards
-   * @return vestingTime The amount of time the reporter's rewards must vest (in seconds)
    */
   function claimableRewards(bytes32 indexId)
     public
@@ -189,8 +191,8 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
       uint256 total,
       uint256 poolAmount,
       uint256 reporterAmount,
-      uint256 residualAmount,
-      uint256 vestingTime
+      uint256 residualAmount
+     // uint256 vestingTime
     )
   {
     return index[indexId].claimableRewards();
@@ -411,6 +413,16 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
   ) external onlyRole(MANAGER) {
     pool[token].setFees(mintFee, burnFee, payee);
   }
+  /**
+   * @dev Update the vesting time.
+   * @param vestingTime The amount of time the reporter's rewards must vest
+   */
+  function setVestingTime(
+    uint32 vestingTime
+  ) external onlyRole(MANAGER)
+  {
+    maxVestingTime = vestingTime;
+  }
 
   function _proposalId(
     uint32 timestamp,
@@ -441,14 +453,14 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
       uint256 total,
       uint256 poolAmount,
       uint256 reporterAmount,
-      uint256 residualAmount,
-      uint256 vestingTime
+      uint256 residualAmount
+    //  uint256 vestingTime
     ) = _index.claimableRewards();
 
     // Pull in reward money from the sponsor
     _index.bondToken.safeTransferFrom(_index.sponsor, address(this), total);
 
-    // Push rewards to pool and methodologist
+    // Push rewards to pool and creator of methodology
     _index.bondToken.safeTransfer(address(pool[_index.bondToken]), poolAmount);
     _index.bondToken.safeTransfer(_index.creatorAddress, residualAmount);
 
@@ -459,7 +471,7 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
       reporterAmount,
       block.timestamp,
       0,
-      vestingTime
+      maxVestingTime
     );
 
     emit Rewarded(reporter, _index.bondToken, reporterAmount);
