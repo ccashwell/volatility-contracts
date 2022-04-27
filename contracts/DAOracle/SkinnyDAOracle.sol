@@ -302,16 +302,11 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
 
     if (relayed.value != request.resolvedPrice) {
       // failed proposal, slash pool to recoup lost bond
-      pool[request.currency].slash(_index.bondAmount, address(this));
+      pool[request.currency].slash(_index.bondAmount, _index.sponsor);
     } else {
       // successful proposal, return bond to sponsor
-      request.currency.safeTransfer(_index.sponsor, request.bond);
+      request.currency.safeTransfer(_index.sponsor, request.currency.balanceOf(address(this)));
 
-      // sends the rest of the funds received to the staking pool
-      request.currency.safeTransfer(
-        address(pool[request.currency]),
-        request.currency.balanceOf(address(this))
-      );
     }
 
     emit Settled(relayed.indexId, id, relayed.value, request.resolvedPrice);
