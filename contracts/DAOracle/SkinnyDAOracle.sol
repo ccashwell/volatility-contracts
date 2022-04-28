@@ -13,6 +13,7 @@ import "./vault/IVestingVault.sol";
 import "./pool/StakingPool.sol";
 import "./pool/SponsorPool.sol";
 
+
 /**
  * @title SkinnyDAOracle
  * @dev This contract is the core of the Volatility Protocol DAOracle System.
@@ -224,20 +225,30 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
       uint32 expiresAt
     )
   {
+
     proposalId = _proposalId(relayed.timestamp, relayed.value, relayed.data);
     require(proposal[proposalId].timestamp == 0, "duplicate proposal");
 
     Index storage _index = index[relayed.indexId];
+
+    uint256 total = _index.drop * (block.timestamp - _index.lastUpdated);
+    bond = _index.bondAmount;
+
     require(
       _index.disputesOutstanding <= maxOutstandingDisputes,
       "index ineligible for proposals"
     );
+    
+    // Does this logic keep someone from relaying an old value?
     require(
       _index.lastUpdated < relayed.timestamp,
       "must be later than most recent proposal"
     );
+    require(
+      total + bond > _index.bondToken.balanceOf(_index.sponsor),
+      "not enough token for bond"
+    );
 
-    bond = _index.bondAmount;
     expiresAt = uint32(block.timestamp) + _index.disputePeriod;
 
     proposal[proposalId] = relayed;
@@ -423,6 +434,15 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
   {
     maxVestingTime = vestingTime;
   }
+
+  function _relayApprovalLogic(
+    uint32 timestamp,
+    int256 value,
+    bytes32 data
+  ) public pure returns (bytes32) {
+    return keccak256(abi.encodePacked(timestamp, value, data));
+  }
+
 
   function _proposalId(
     uint32 timestamp,

@@ -27,6 +27,7 @@ interface SkinnyDAOracleInterface extends ethers.utils.Interface {
     "PROPOSAL_TYPEHASH()": FunctionFragment;
     "PROPOSER()": FunctionFragment;
     "_proposalId(uint32,int256,bytes32)": FunctionFragment;
+    "_relayApprovalLogic(uint32,int256,bytes32)": FunctionFragment;
     "claimableRewards(bytes32)": FunctionFragment;
     "configureIndex(address,uint256,bytes32,uint32,uint64,uint64,uint64,uint256,uint64,address,address)": FunctionFragment;
     "defaultDisputePeriod()": FunctionFragment;
@@ -68,6 +69,10 @@ interface SkinnyDAOracleInterface extends ethers.utils.Interface {
   encodeFunctionData(functionFragment: "PROPOSER", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "_proposalId",
+    values: [BigNumberish, BigNumberish, BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "_relayApprovalLogic",
     values: [BigNumberish, BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
@@ -208,6 +213,10 @@ interface SkinnyDAOracleInterface extends ethers.utils.Interface {
   decodeFunctionResult(functionFragment: "PROPOSER", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "_proposalId",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "_relayApprovalLogic",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -435,6 +444,13 @@ export class SkinnyDAOracle extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
+    _relayApprovalLogic(
+      timestamp: BigNumberish,
+      value: BigNumberish,
+      data: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<[string]>;
+
     claimableRewards(
       indexId: BytesLike,
       overrides?: CallOverrides
@@ -639,6 +655,13 @@ export class SkinnyDAOracle extends BaseContract {
     overrides?: CallOverrides
   ): Promise<string>;
 
+  _relayApprovalLogic(
+    timestamp: BigNumberish,
+    value: BigNumberish,
+    data: BytesLike,
+    overrides?: CallOverrides
+  ): Promise<string>;
+
   claimableRewards(
     indexId: BytesLike,
     overrides?: CallOverrides
@@ -837,6 +860,13 @@ export class SkinnyDAOracle extends BaseContract {
     PROPOSER(overrides?: CallOverrides): Promise<string>;
 
     _proposalId(
+      timestamp: BigNumberish,
+      value: BigNumberish,
+      data: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<string>;
+
+    _relayApprovalLogic(
       timestamp: BigNumberish,
       value: BigNumberish,
       data: BytesLike,
@@ -1255,6 +1285,13 @@ export class SkinnyDAOracle extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    _relayApprovalLogic(
+      timestamp: BigNumberish,
+      value: BigNumberish,
+      data: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     claimableRewards(
       indexId: BytesLike,
       overrides?: CallOverrides
@@ -1409,6 +1446,13 @@ export class SkinnyDAOracle extends BaseContract {
     PROPOSER(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _proposalId(
+      timestamp: BigNumberish,
+      value: BigNumberish,
+      data: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    _relayApprovalLogic(
       timestamp: BigNumberish,
       value: BigNumberish,
       data: BytesLike,
