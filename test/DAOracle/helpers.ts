@@ -85,17 +85,17 @@ export async function configureIndex(
   );
 }
 
-export async function setDefaultDisputePeriod(
+export async function setMaxOutstandingDisputes(
 	daoracle: SkinnyDAOracle,
-	defaultDisputePeriod?: BigNumberish,
+  maxOutstandingDisputes?: BigNumberish,
 	as?: SignerWithAddress,
   ): Promise<ContractTransaction> {
 	if (as) {
 	  daoracle = daoracle.connect(as);
 	}
   
-	return daoracle.setdefaultDisputePeriod(
-		defaultDisputePeriod ?? parseEther("3")
+	return daoracle.setMaxOutstandingDisputes(
+    maxOutstandingDisputes ?? parseEther("3")
 	);
 }
 
@@ -112,7 +112,7 @@ export async function setExternalIdentifier(
 		externalIdentifier ?? hre.ethers.utils.formatBytes32String("VolatilityDAOracle")
 	);
 }
-
+/*
 export async function setMaxOutstandingDisputes(
 	daoracle: SkinnyDAOracle,
 	maxOutstandingDisputes?: BigNumberish,
@@ -126,7 +126,7 @@ export async function setMaxOutstandingDisputes(
 		maxOutstandingDisputes ?? parseEther("3")
 	);
 }
-
+*/
 export const signProposal = async (
   daoracle: SkinnyDAOracle,
   proposal: Proposal,

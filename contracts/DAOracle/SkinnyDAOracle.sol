@@ -99,15 +99,16 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
   // Vesting Vault (for Rewards)
   IVestingVault public immutable vault;
 
-  //VestingTime
-  uint32 public maxVestingTime = 10 minutes;
+  //VestingTimes
+  //uint32 public maxVestingTime = 10 minutes; // rewards drip
+  uint32 public maxCliffTime =  10 minutes; // cliff before rewards are released
 
   // Indexes and Proposals
   mapping(bytes32 => Index) public index;
   mapping(bytes32 => Proposal) public proposal;
   mapping(bytes32 => bool) public isDisputed;
-  uint32 public defaultDisputePeriod = 10 minutes;
-  uint32 public maxOutstandingDisputes = 3;
+  uint16 public defaultDisputePeriod = 10 minutes;
+  uint8 public maxOutstandingDisputes = 3;
 
   // Staking Pools (bond insurance)
   mapping(IERC20 => StakingPool) public pool;
@@ -238,12 +239,12 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
       _index.disputesOutstanding <= maxOutstandingDisputes,
       "index ineligible for proposals"
     );
-    
-    // Does this logic keep someone from relaying an old value?
+
     require(
-      _index.lastUpdated < relayed.timestamp,
-      "must be later than most recent proposal"
+      block.timestamp < relayed.timestamp + _index.disputePeriod && _index.lastUpdated < relayed.timestamp,
+      "relayed proposal not disputable or not later than most recent proposal"
     );
+
     require(
       total + bond > _index.bondToken.balanceOf(_index.sponsor),
       "not enough token for bond"
@@ -381,16 +382,9 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
   }
 
   /**
-   * @dev Update the global default disputePeriod. Can only be called by managers.
-   * @param disputePeriod The new disputePeriod, in seconds
+   * @dev Update the externalIdentifier. Can only be called by managers.
+   * @param identifier The identifier in UMIP-151.md
    */
-  function setdefaultDisputePeriod(uint32 disputePeriod)
-    external
-    onlyRole(MANAGER)
-  {
-    defaultDisputePeriod = disputePeriod;
-  }
-
   function setExternalIdentifier(bytes32 identifier)
     external
     onlyRole(MANAGER)
@@ -398,14 +392,31 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
     externalIdentifier = identifier;
   }
 
+/*
   /**
-   * @dev Update the global default maxOutstandingDisputes. Can only be called by managers.
+   * @dev Update the vesting time.
+   * //param vestingTime The amount of minutes during which rewards vest. They are released constantly throughout.
+   * @param cliffTime The amount of minutes before vestingTime starts.
+   *//*
+  function setVestingParameters(
+    //uint32 vestingTime,
+    uint32 cliffTime
+  ) external onlyRole(MANAGER)
+  {
+    //maxVestingTime = vestingTime;
+    maxCliffTime = cliffTime;
+  }
+*/
+  /**
+   * @dev Update the global default disputePeriod. Can only be called by managers.
    * @param outstandingDisputes The new maxOutstandingDisputes
    */
-  function setMaxOutstandingDisputes(uint32 outstandingDisputes)
-    external
-    onlyRole(MANAGER)
+  function setMaxOutstandingDisputes(
+  //  uint16 disputePeriod, 
+    uint8 outstandingDisputes
+  ) external onlyRole(MANAGER)
   {
+  //  defaultDisputePeriod = disputePeriod;
     maxOutstandingDisputes = outstandingDisputes;
   }
 
@@ -424,25 +435,6 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
   ) external onlyRole(MANAGER) {
     pool[token].setFees(mintFee, burnFee, payee);
   }
-  /**
-   * @dev Update the vesting time.
-   * @param vestingTime The amount of time the reporter's rewards must vest
-   */
-  function setVestingTime(
-    uint32 vestingTime
-  ) external onlyRole(MANAGER)
-  {
-    maxVestingTime = vestingTime;
-  }
-
-  function _relayApprovalLogic(
-    uint32 timestamp,
-    int256 value,
-    bytes32 data
-  ) public pure returns (bytes32) {
-    return keccak256(abi.encodePacked(timestamp, value, data));
-  }
-
 
   function _proposalId(
     uint32 timestamp,
@@ -490,8 +482,8 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
       _index.bondToken,
       reporterAmount,
       block.timestamp,
-      0,
-      maxVestingTime
+      maxCliffTime,
+      0  //maxVestingTime
     );
 
     emit Rewarded(reporter, _index.bondToken, reporterAmount);
