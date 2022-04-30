@@ -13,6 +13,8 @@ import "./vault/IVestingVault.sol";
 import "./pool/StakingPool.sol";
 import "./pool/SponsorPool.sol";
 
+import "hardhat/console.sol";
+
 
 /**
  * @title SkinnyDAOracle
@@ -249,9 +251,10 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
     );
 
     require(
-      total + bond > _index.bondToken.balanceOf(_index.sponsor),
+      total + bond < _index.bondToken.balanceOf(_index.sponsor),
       "not enough tokens"
     );
+
 
     expiresAt = uint32(block.timestamp) + _index.disputePeriod;
 
@@ -400,7 +403,7 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
    * @dev Update the vesting time.
    * //param vestingTime The amount of minutes during which rewards vest. They are released constantly throughout.
    * @param cliffTime The amount of minutes before vestingTime starts.
-   */
+   *//*
   function setVestingParameters(
     uint32 vestingTime,
     uint32 cliffTime
@@ -409,7 +412,7 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
     maxVestingTime = vestingTime;
     maxCliffTime = cliffTime;
   }
-
+*/
   /**
    * @dev Update the global default disputePeriod. Can only be called by managers.
    * @param outstandingDisputes The new maxOutstandingDisputes
@@ -468,8 +471,8 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
       uint256 total,
       uint256 poolAmount,
       uint256 reporterAmount,
-      uint256 residualAmount,
-      uint256 vestingTime
+      uint256 residualAmount
+     // uint256 vestingTime
     ) = _index.claimableRewards();
 
     // Pull in reward money from the sponsor

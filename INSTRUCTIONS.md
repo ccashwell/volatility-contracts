@@ -8,7 +8,7 @@ This document describes how to deploy and set up the DAOracle.
 
 2. Verify SkinnyDAOracle on Etherscan:
 
- `npx hardhat verify --network rinkeby SKINNY_DAORACLE_ADDRESS "PARAMETER_1" "PARAMETET_2" "PARAMETER_3"`
+ `npx hardhat verify --network rinkeby SKINNY_DAORACLE_ADDRESS "PARAMETER_1" "PARAMETER_2" "PARAMETER_3"`
 
 where
 
@@ -31,10 +31,10 @@ PARAMETER_1 = DEFAULT_TOKEN_ADDRESS = `"0xc7AD46e0b8a400Bb3C915120d284AafbA8fc47
 5. Copy addresses and place them here:
 
     * Rinkeby
-        * VestingVault deployed to: `0x60551A9e914F661f25856A6AB2bD856D443e41a6`
-        * DAOracleHelpers library deployed to: `0x4b928e28E05A4546411e7F8A229AB744BDb965BB`
-        * SkinnyDAOracle deployed to: `0xb380E171C0E559335b70eC02E16b783eF59f9F1D`
-        * SponsorPool deployed to: `0xCa5470656635D0321108B246922C7530af989EC1`
+       * VestingVault deployed to: `0x92aae69a1C01D4fB14D526A5bD55426a0dE4eb86`
+       * DAOracleHelpers library deployed to: `0x71716a47539e1D8CB64c20Bf80cAC8781d012B18`
+       * SkinnyDAOracle deployed to: `0x53582CF74DDceDBc4800205BBf794224e5B38554`
+       * SponsorPool deployed to: `0x60f3C4f19dA3C709Bc506fD10CD0579A729402B0`
 
 6. Update daoracleUtils.ts with addresses.
 
@@ -76,11 +76,11 @@ PARAMETER_1 = DEFAULT_TOKEN_ADDRESS = `"0xc7AD46e0b8a400Bb3C915120d284AafbA8fc47
     * input (bytes32): `0x4d4649562d3134442d455448`(MFIV-14D-ETH)
 
     Copy and place new sponsor pool address here:
-        * `0xC9a27efb05eCb140DF213A5513C09417e81939d5`
+        * `0x2f7F9174cDd78156752fA2e31f1c3C3c032e62D8`
 
 3. Set approval for the SponsorPool to Spend the DAO multi-sig token. Must be sent from the DAO multi-sig.
-    * DAI Contract on Rinkeby -> Contract -> Write Tab -> 1. approve
-    * usr (address): `0xC9a27efb05eCb140DF213A5513C09417e81939d5`
+    * DAI Contract on Rinkeby: `0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735` -> Contract -> Write Tab -> 1. approve
+    * usr (address): `0x2f7F9174cDd78156752fA2e31f1c3C3c032e62D8`
     * wad (unit256): `115792089237316195423570985008687907853269984665640564039457584007913129639935`
     * NOTE: usr should be SponsorPool address that you look up in step 2.
     * NOTE: wad should be amount to send * 10^18 + 100

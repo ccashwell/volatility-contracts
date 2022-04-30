@@ -40,7 +40,6 @@ abstract contract Slashable is AccessControl, IERC20 {
     } else {
       // enough tokens in pool to cover slash
       token.safeTransfer(receiver, amount);
-
     }
 
     token.safeTransfer(receiver, amount);
