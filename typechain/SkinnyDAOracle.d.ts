@@ -39,6 +39,7 @@ interface SkinnyDAOracleInterface extends ethers.utils.Interface {
     "isDisputed(bytes32)": FunctionFragment;
     "maxCliffTime()": FunctionFragment;
     "maxOutstandingDisputes()": FunctionFragment;
+    "maxVestingTime()": FunctionFragment;
     "oracle()": FunctionFragment;
     "pool(address)": FunctionFragment;
     "priceSettled(bytes32,uint32,bytes,(address,address,address,bool,int256,int256,uint256,uint256,uint256,uint256,uint256))": FunctionFragment;
@@ -49,6 +50,7 @@ interface SkinnyDAOracleInterface extends ethers.utils.Interface {
     "setExternalIdentifier(bytes32)": FunctionFragment;
     "setMaxOutstandingDisputes(uint8)": FunctionFragment;
     "setPoolFees(address,uint256,uint256,address)": FunctionFragment;
+    "setVestingParameters(uint32,uint32)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "vault()": FunctionFragment;
   };
@@ -122,6 +124,10 @@ interface SkinnyDAOracleInterface extends ethers.utils.Interface {
     functionFragment: "maxOutstandingDisputes",
     values?: undefined
   ): string;
+  encodeFunctionData(
+    functionFragment: "maxVestingTime",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "oracle", values?: undefined): string;
   encodeFunctionData(functionFragment: "pool", values: [string]): string;
   encodeFunctionData(
@@ -180,6 +186,10 @@ interface SkinnyDAOracleInterface extends ethers.utils.Interface {
     values: [string, BigNumberish, BigNumberish, string]
   ): string;
   encodeFunctionData(
+    functionFragment: "setVestingParameters",
+    values: [BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "supportsInterface",
     values: [BytesLike]
   ): string;
@@ -233,6 +243,10 @@ interface SkinnyDAOracleInterface extends ethers.utils.Interface {
     functionFragment: "maxOutstandingDisputes",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "maxVestingTime",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "oracle", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "pool", data: BytesLike): Result;
   decodeFunctionResult(
@@ -256,6 +270,10 @@ interface SkinnyDAOracleInterface extends ethers.utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "setPoolFees",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setVestingParameters",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -508,6 +526,8 @@ export class SkinnyDAOracle extends BaseContract {
 
     maxOutstandingDisputes(overrides?: CallOverrides): Promise<[number]>;
 
+    maxVestingTime(overrides?: CallOverrides): Promise<[number]>;
+
     oracle(overrides?: CallOverrides): Promise<[string]>;
 
     pool(arg0: string, overrides?: CallOverrides): Promise<[string]>;
@@ -583,6 +603,12 @@ export class SkinnyDAOracle extends BaseContract {
       mintFee: BigNumberish,
       burnFee: BigNumberish,
       payee: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setVestingParameters(
+      vestingTime: BigNumberish,
+      cliffTime: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -702,6 +728,8 @@ export class SkinnyDAOracle extends BaseContract {
 
   maxOutstandingDisputes(overrides?: CallOverrides): Promise<number>;
 
+  maxVestingTime(overrides?: CallOverrides): Promise<number>;
+
   oracle(overrides?: CallOverrides): Promise<string>;
 
   pool(arg0: string, overrides?: CallOverrides): Promise<string>;
@@ -777,6 +805,12 @@ export class SkinnyDAOracle extends BaseContract {
     mintFee: BigNumberish,
     burnFee: BigNumberish,
     payee: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setVestingParameters(
+    vestingTime: BigNumberish,
+    cliffTime: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -893,6 +927,8 @@ export class SkinnyDAOracle extends BaseContract {
 
     maxOutstandingDisputes(overrides?: CallOverrides): Promise<number>;
 
+    maxVestingTime(overrides?: CallOverrides): Promise<number>;
+
     oracle(overrides?: CallOverrides): Promise<string>;
 
     pool(arg0: string, overrides?: CallOverrides): Promise<string>;
@@ -974,6 +1010,12 @@ export class SkinnyDAOracle extends BaseContract {
       mintFee: BigNumberish,
       burnFee: BigNumberish,
       payee: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setVestingParameters(
+      vestingTime: BigNumberish,
+      cliffTime: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1261,6 +1303,8 @@ export class SkinnyDAOracle extends BaseContract {
 
     maxOutstandingDisputes(overrides?: CallOverrides): Promise<BigNumber>;
 
+    maxVestingTime(overrides?: CallOverrides): Promise<BigNumber>;
+
     oracle(overrides?: CallOverrides): Promise<BigNumber>;
 
     pool(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
@@ -1326,6 +1370,12 @@ export class SkinnyDAOracle extends BaseContract {
       mintFee: BigNumberish,
       burnFee: BigNumberish,
       payee: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    setVestingParameters(
+      vestingTime: BigNumberish,
+      cliffTime: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1423,6 +1473,8 @@ export class SkinnyDAOracle extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    maxVestingTime(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     oracle(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     pool(
@@ -1494,6 +1546,12 @@ export class SkinnyDAOracle extends BaseContract {
       mintFee: BigNumberish,
       burnFee: BigNumberish,
       payee: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setVestingParameters(
+      vestingTime: BigNumberish,
+      cliffTime: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
