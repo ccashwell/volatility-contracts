@@ -244,12 +244,9 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
       "max diputes out"
     );
    
-  //NOTE for the below logic to keep the system working as intended
-  //(i.e. only the most recent IPFS data can be relayed)
-  // disputePeriod must be set by the DAO to be 2X the period
-  // at which data is posted to IPFS.
+// DAO must set disputePeriod to 2X period of IPFS posts.
     require(
-      block.timestamp < relayed.timestamp + (_index.disputePeriod / 2), //&& _index.lastUpdated < relayed.timestamp,
+      block.timestamp < relayed.timestamp + (_index.disputePeriod / 2),
       "not disputable"
     );
 
