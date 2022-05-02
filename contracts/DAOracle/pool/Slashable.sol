@@ -24,25 +24,27 @@ abstract contract Slashable is AccessControl, IERC20 {
    */
   function slash(uint256 amount, address receiver) external onlyRole(SLASHER) {
     IERC20 token = underlying();
-   // Why is this require here? Shouldn't it slash the entire amount? Perhaps this needs to be an
-   // if statement check. If token.balanceOf(address(this)) <= amount then slash for full amount,
-   // else slash for token.balanceOf(address(this))
-   /*
-    require(
-      token.balanceOf(address(this)) >= amount,
-      "slash: insufficient balance"
-    );
-    */
+ 
+
+
 
     if (token.balanceOf(address(this)) <= amount) {
       // Not enough tokens in pool to cover slash
+      require(
+        token.balanceOf(address(this)) > 0,
+        "slash: insufficient balance"
+      );
      token.safeTransfer(receiver, token.balanceOf(address(this)));
     } else {
       // enough tokens in pool to cover slash
+      require(
+        token.balanceOf(address(this)) >= amount,
+        "slash: insufficient balance"
+      );
       token.safeTransfer(receiver, amount);
     }
 
-    token.safeTransfer(receiver, amount);
+  //  token.safeTransfer(receiver, amount);
     emit Slash(msg.sender, token, amount);
   }
 }

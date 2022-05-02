@@ -6,10 +6,22 @@ This document describes how to deploy and set up the DAOracle.
 
 `npx hardhat run scripts/deploy.ts --network rinkeby`
 
+Copy addresses and place them here (use find and replace):
+
+    * Rinkeby
+       * VestingVault deployed to: `0xC5ed34a5aCB4b6Aa58dc173fae542B87f311a780`
+       * DAOracleHelpers library deployed to: `0x7a110e70C0Bd9383b674a6AE2E536d32707D235C`
+       * SkinnyDAOracle deployed to: `0x4298D9098fBEf0AE5E21A0B8408D7889850964aa`
+       * SponsorPool deployed to: `0x2569698D08F6eBAa88DCf1857990225407b9f0b1`
+
 2. Verify SkinnyDAOracle on Etherscan:
 
  `npx hardhat verify --network rinkeby SKINNY_DAORACLE_ADDRESS "PARAMETER_1" "PARAMETER_2" "PARAMETER_3"`
 
+Example:
+```
+npx hardhat verify --network rinkeby "0x4298D9098fBEf0AE5E21A0B8408D7889850964aa" "0x566f6c6174696c69747944414f7261636c650000000000000000000000000000" "0xAbE04Ace666294aefD65F991d78CE9F9218aFC67" "0xC5ed34a5aCB4b6Aa58dc173fae542B87f311a780"
+```
 where
 
 PARAMETER_1 = OO_FEED_ID = `"0x566f6c6174696c69747944414f7261636c650000000000000000000000000000"` 
@@ -22,21 +34,20 @@ PARAMETER_3 = Vesting Vault Address = Look up from 1. above
 
 `npx hardhat verify --network rinkeby SPONSOR_POOL_ADDRESS "PARAMETER_1"`
 
+EXAMPLE:
+```
+npx hardhat verify --network rinkeby 0x2569698D08F6eBAa88DCf1857990225407b9f0b1 "0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735"
+```
+
 where
 
 PARAMETER_1 = DEFAULT_TOKEN_ADDRESS = `"0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735"`
 
 4. Verify UMA has added price identifier and DEFAULT_TOKEN_ADDRESS to the Skinny00. Only once. For mainnet, this is done through a UMIP.
 
-5. Copy addresses and place them here:
-
-    * Rinkeby
-       * VestingVault deployed to: `0x92aae69a1C01D4fB14D526A5bD55426a0dE4eb86`
-       * DAOracleHelpers library deployed to: `0x71716a47539e1D8CB64c20Bf80cAC8781d012B18`
-       * SkinnyDAOracle deployed to: `0x53582CF74DDceDBc4800205BBf794224e5B38554`
-       * SponsorPool deployed to: `0x60f3C4f19dA3C709Bc506fD10CD0579A729402B0`
-
-6. Update daoracleUtils.ts with addresses.
+5. Update daoracleUtils.ts with addresses.
+    * SkinnyDAOracle
+    * VestingVault
 
 ## Set Roles
 
@@ -76,23 +87,32 @@ PARAMETER_1 = DEFAULT_TOKEN_ADDRESS = `"0xc7AD46e0b8a400Bb3C915120d284AafbA8fc47
     * input (bytes32): `0x4d4649562d3134442d455448`(MFIV-14D-ETH)
 
     Copy and place new sponsor pool address here:
-        * `0x2f7F9174cDd78156752fA2e31f1c3C3c032e62D8`
+        * `0xa961B5773Ea1f4441a053c16876460D04a698709`
 
 3. Set approval for the SponsorPool to Spend the DAO multi-sig token. Must be sent from the DAO multi-sig.
     * DAI Contract on Rinkeby: `0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735` -> Contract -> Write Tab -> 1. approve
-    * usr (address): `0x2f7F9174cDd78156752fA2e31f1c3C3c032e62D8`
+    * usr (address): `0xa961B5773Ea1f4441a053c16876460D04a698709`
     * wad (unit256): `115792089237316195423570985008687907853269984665640564039457584007913129639935`
     * NOTE: usr should be SponsorPool address that you look up in step 2.
     * NOTE: wad should be amount to send * 10^18 + 100
     * NOTE: Reset approval on mainnet to 0 after mint
 
-4. Deposit into the SponsorPool with Mint:
-    * SponsorPool Contract on Rinkeby -> Contract -> Write Tab -> 6. mint
+4. Deposit into the newly created SponsorPool with Mint:
+    * SponsorPool Contract:`0xa961B5773Ea1f4441a053c16876460D04a698709`  on Rinkeby -> Contract -> Write Tab -> 6. mint
     * _stakeAmount (uint256): amount to send * 10^18
+
+**TESTS**
+-[] Fund SponsorPool with less than enough tokens to cover a bond but more than enough to pay rewards. Can you relay? (FAIL)
+-[] Fund SponsorPool with 10 million tokens. Can you relay? (PASS)
 
 ## Fund StakingPool
 
 1. Stake on the DAOracle website. Approval for the Token should be requested. If not, then follow the same steps for funding the SponsorPool. If you cannot find the StakingPool address you can relay an index. The staking pool will be the first address that the DAOracle contract sends to.
+
+**TESTS**
+-[] Stake 1000 tokens. Return a bond from UMA as lost. Is the entire StakingPool slashed?
+-[] Stake 100,000 tokens. Return a bond from UMA as lost. Is the correct amount from the StakingPool slashed?
+
 
 ## Returning Bonds From UMA
 
@@ -187,7 +207,7 @@ Then look at events and copy the values from dispute price for.
 NOTE:  resolvedPrice always 0
 
 ```
-["0xb380e171c0e559335b70ec02e16b783ef59f9f1d","0x06985aa459afaa7dd2a33f0e873bc297f2f2978f","0xc7ad46e0b8a400bb3c915120d284aafba8fc4735",false,"6441456720927799",0,1651253972,0,0,"7150000000000000000000",600]
+["0x4298D9098fBEf0AE5E21A0B8408D7889850964aa","0x06985aa459afaa7dd2a33f0e873bc297f2f2978f","0xc7ad46e0b8a400bb3c915120d284aafba8fc4735",false,"6367139814808473",0,1651422778,0,0,"7150000000000000000000",600]
 
 ```
 
@@ -231,3 +251,7 @@ Verify the following checklists. (PASS / FAIL) denotes whether the test should p
 
 ### MIX TESTS
 -[] Return a bond so one less than maximum number is out, can you relay? (PASS)
+
+### VERIFY UI TESTS
+-[] Change the index values for floor, drip, ceiling, etc. Do these reflect in the UI? (PASS)
+-[] Change the vesting values. Do these reflect in the UI?

@@ -13,7 +13,6 @@ import "./vault/IVestingVault.sol";
 import "./pool/StakingPool.sol";
 import "./pool/SponsorPool.sol";
 
-import "hardhat/console.sol";
 
 
 /**
@@ -398,12 +397,12 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
     externalIdentifier = identifier;
   }
 
-/*
+
   /**
    * @dev Update the vesting time.
    * //param vestingTime The amount of minutes during which rewards vest. They are released constantly throughout.
    * @param cliffTime The amount of minutes before vestingTime starts.
-   *//*
+   */
   function setVestingParameters(
     uint32 vestingTime,
     uint32 cliffTime
@@ -412,17 +411,17 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
     maxVestingTime = vestingTime;
     maxCliffTime = cliffTime;
   }
-*/
+
   /**
    * @dev Update the global default disputePeriod. Can only be called by managers.
    * @param outstandingDisputes The new maxOutstandingDisputes
    */
   function setMaxOutstandingDisputes(
-  //  uint16 disputePeriod, 
+   // uint16 disputePeriod, 
     uint8 outstandingDisputes
   ) external onlyRole(MANAGER)
   {
-  //  defaultDisputePeriod = disputePeriod;
+    //defaultDisputePeriod = disputePeriod;
     maxOutstandingDisputes = outstandingDisputes;
   }
 

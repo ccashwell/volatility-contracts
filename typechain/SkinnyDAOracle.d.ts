@@ -50,6 +50,7 @@ interface SkinnyDAOracleInterface extends ethers.utils.Interface {
     "setExternalIdentifier(bytes32)": FunctionFragment;
     "setMaxOutstandingDisputes(uint8)": FunctionFragment;
     "setPoolFees(address,uint256,uint256,address)": FunctionFragment;
+    "setVestingParameters(uint32,uint32)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "vault()": FunctionFragment;
   };
@@ -185,6 +186,10 @@ interface SkinnyDAOracleInterface extends ethers.utils.Interface {
     values: [string, BigNumberish, BigNumberish, string]
   ): string;
   encodeFunctionData(
+    functionFragment: "setVestingParameters",
+    values: [BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "supportsInterface",
     values: [BytesLike]
   ): string;
@@ -265,6 +270,10 @@ interface SkinnyDAOracleInterface extends ethers.utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "setPoolFees",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setVestingParameters",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -597,6 +606,12 @@ export class SkinnyDAOracle extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    setVestingParameters(
+      vestingTime: BigNumberish,
+      cliffTime: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     supportsInterface(
       interfaceId: BytesLike,
       overrides?: CallOverrides
@@ -790,6 +805,12 @@ export class SkinnyDAOracle extends BaseContract {
     mintFee: BigNumberish,
     burnFee: BigNumberish,
     payee: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setVestingParameters(
+    vestingTime: BigNumberish,
+    cliffTime: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -989,6 +1010,12 @@ export class SkinnyDAOracle extends BaseContract {
       mintFee: BigNumberish,
       burnFee: BigNumberish,
       payee: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setVestingParameters(
+      vestingTime: BigNumberish,
+      cliffTime: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1346,6 +1373,12 @@ export class SkinnyDAOracle extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    setVestingParameters(
+      vestingTime: BigNumberish,
+      cliffTime: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     supportsInterface(
       interfaceId: BytesLike,
       overrides?: CallOverrides
@@ -1513,6 +1546,12 @@ export class SkinnyDAOracle extends BaseContract {
       mintFee: BigNumberish,
       burnFee: BigNumberish,
       payee: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setVestingParameters(
+      vestingTime: BigNumberish,
+      cliffTime: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
