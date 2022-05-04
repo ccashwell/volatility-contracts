@@ -100,14 +100,14 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
   bytes32 public constant MANAGER = keccak256("MANAGER");
   bytes32 public constant PROPOSER = keccak256("PROPOSER");
 
-
   // UMA's SkinnyOptimisticOracle and registered identifier
   SkinnyOptimisticOracleInterface public immutable oracle;
   bytes32 public externalIdentifier;
 
-  //Disputes
-  uint32 public defaultDisputePeriod = 10 minutes;
-  uint32 public maxOutstandingDisputes = 3;
+
+  //Vesting
+  uint32 public maxVestingTime = 10 minutes; // rewards drip
+  uint32 public maxCliffTime =  10 minutes; // cliff before rewards are released
 
   // Staking Pools (bond insurance)
   mapping(IERC20 => StakingPool) public pool;
@@ -125,9 +125,9 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
   mapping(bytes32 => Proposal) public proposal;
   mapping(bytes32 => bool) public isDisputed;
 
-  //Vesting
-  uint32 public maxVestingTime = 10 minutes; // rewards drip
-  uint32 public maxCliffTime =  10 minutes; // cliff before rewards are released
+  //Disputes
+  //uint32 public defaultDisputePeriod = 10 minutes;
+  uint32 public maxOutstandingDisputes = 3;
 
 
   /**
@@ -373,9 +373,7 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
     _index.floor = floor;
     _index.creatorAmount = creatorAmount;
     _index.creatorAddress = creatorAddress;
-    _index.disputePeriod = disputePeriod == 0
-      ? defaultDisputePeriod
-      : disputePeriod;
+    _index.disputePeriod = disputePeriod;
     _index.sponsor = sponsor == address(0)
       ? address(_index.deploySponsorPool())
       : sponsor;
@@ -439,6 +437,9 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
     uint256 burnFee,
     address payee
   ) external onlyRole(MANAGER) {
+    require(
+      mintFee < 10**18 && burnFee < 10**18
+    );
     pool[token].setFees(mintFee, burnFee, payee);
   }
 

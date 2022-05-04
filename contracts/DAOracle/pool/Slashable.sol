@@ -30,17 +30,9 @@ abstract contract Slashable is AccessControl, IERC20 {
 
     if (token.balanceOf(address(this)) <= amount) {
       // Not enough tokens in pool to cover slash
-      require(
-        token.balanceOf(address(this)) > 0,
-        "slash: insufficient balance"
-      );
      token.safeTransfer(receiver, token.balanceOf(address(this)));
     } else {
       // enough tokens in pool to cover slash
-      require(
-        token.balanceOf(address(this)) >= amount,
-        "slash: insufficient balance"
-      );
       token.safeTransfer(receiver, amount);
     }
 

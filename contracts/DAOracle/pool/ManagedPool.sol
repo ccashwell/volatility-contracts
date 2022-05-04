@@ -75,12 +75,22 @@ abstract contract ManagedPool is AccessControl, ERC20 {
     }
 
     // Calculate the pool shares for the new deposit
-    if (oldShares != 0) {
+    if (oldShares != 0 && oldBalance != 0) {
       // shares = stake * oldShares / oldBalance
       shares = (_stakeAmount * oldShares) / oldBalance;
-    } else {
-      // if no shares exist, just assign 1,000 shares (it's arbitrary)
-      shares = 10**3;
+
+    } else if (oldShares != 0 && oldBalance == 0 ){
+       //while highly improbable, oldBalance can = 0 in the following cases:
+       //StakingPool - the entire pool is slashed
+       //SponsorPool - all tokens are removed as bonds (there is a require to stop this)
+       //Both Pools - Fees are set to 100% (there is a require to stops)
+      
+       //we make the new shares worth 99.999% of the pool
+      shares = oldShares * 10**3;
+      
+    } else{
+      // if no shares exist, just assign 10 shares (it's arbitrary)
+      shares = 10;
     }
 
     // Transfer shares to caller

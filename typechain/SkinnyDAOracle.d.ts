@@ -29,7 +29,6 @@ interface SkinnyDAOracleInterface extends ethers.utils.Interface {
     "_proposalId(uint32,int256,bytes32)": FunctionFragment;
     "claimableRewards(bytes32)": FunctionFragment;
     "configureIndex(address,uint256,bytes32,uint32,uint64,uint64,uint64,uint256,uint64,address,address)": FunctionFragment;
-    "defaultDisputePeriod()": FunctionFragment;
     "dispute(bytes32)": FunctionFragment;
     "externalIdentifier()": FunctionFragment;
     "getRoleAdmin(bytes32)": FunctionFragment;
@@ -89,10 +88,6 @@ interface SkinnyDAOracleInterface extends ethers.utils.Interface {
       string,
       string
     ]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "defaultDisputePeriod",
-    values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "dispute", values: [BytesLike]): string;
   encodeFunctionData(
@@ -216,10 +211,6 @@ interface SkinnyDAOracleInterface extends ethers.utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "configureIndex",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "defaultDisputePeriod",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "dispute", data: BytesLike): Result;
@@ -462,8 +453,6 @@ export class SkinnyDAOracle extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    defaultDisputePeriod(overrides?: CallOverrides): Promise<[number]>;
-
     dispute(
       proposalId: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -664,8 +653,6 @@ export class SkinnyDAOracle extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  defaultDisputePeriod(overrides?: CallOverrides): Promise<number>;
-
   dispute(
     proposalId: BytesLike,
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -865,8 +852,6 @@ export class SkinnyDAOracle extends BaseContract {
       sponsor: string,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    defaultDisputePeriod(overrides?: CallOverrides): Promise<number>;
 
     dispute(proposalId: BytesLike, overrides?: CallOverrides): Promise<void>;
 
@@ -1269,8 +1254,6 @@ export class SkinnyDAOracle extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    defaultDisputePeriod(overrides?: CallOverrides): Promise<BigNumber>;
-
     dispute(
       proposalId: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -1425,10 +1408,6 @@ export class SkinnyDAOracle extends BaseContract {
       creatorAddress: string,
       sponsor: string,
       overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    defaultDisputePeriod(
-      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     dispute(
