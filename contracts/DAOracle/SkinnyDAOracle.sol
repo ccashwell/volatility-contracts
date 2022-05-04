@@ -399,7 +399,7 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
 
   /**
    * @dev Update the vesting time.
-   * //param vestingTime The amount of minutes during which rewards vest. They are released constantly throughout.
+   * @param vestingTime The amount of minutes during which rewards vest. They are released constantly throughout.
    * @param cliffTime The amount of minutes before vestingTime starts.
    */
   function setVestingParameters(

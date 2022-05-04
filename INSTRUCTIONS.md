@@ -9,10 +9,10 @@ This document describes how to deploy and set up the DAOracle.
 Copy addresses and place them here (use find and replace):
 
     * Rinkeby
-       * VestingVault deployed to: `0xC5ed34a5aCB4b6Aa58dc173fae542B87f311a780`
-       * DAOracleHelpers library deployed to: `0x7a110e70C0Bd9383b674a6AE2E536d32707D235C`
-       * SkinnyDAOracle deployed to: `0x4298D9098fBEf0AE5E21A0B8408D7889850964aa`
-       * SponsorPool deployed to: `0x2569698D08F6eBAa88DCf1857990225407b9f0b1`
+       * VestingVault deployed to: `0x4272c990a0736D4362D0634142B2F56d73725597`
+       * DAOracleHelpers library deployed to: `0xFDf3Bea2086352E08d3CDFcfC717915321889C6B`
+       * SkinnyDAOracle deployed to: `0xE3383f3FdA18cFeb3490ce208EAE6c793b59b1fE`
+       * SponsorPool deployed to: `0x9A5a99f71CcC699d89b334a92a4684934a178fC8`
 
 2. Verify SkinnyDAOracle on Etherscan:
 
@@ -20,7 +20,7 @@ Copy addresses and place them here (use find and replace):
 
 Example:
 ```
-npx hardhat verify --network rinkeby "0x4298D9098fBEf0AE5E21A0B8408D7889850964aa" "0x566f6c6174696c69747944414f7261636c650000000000000000000000000000" "0xAbE04Ace666294aefD65F991d78CE9F9218aFC67" "0xC5ed34a5aCB4b6Aa58dc173fae542B87f311a780"
+npx hardhat verify --network rinkeby "0xE3383f3FdA18cFeb3490ce208EAE6c793b59b1fE" "0x566f6c6174696c69747944414f7261636c650000000000000000000000000000" "0xAbE04Ace666294aefD65F991d78CE9F9218aFC67" "0x4272c990a0736D4362D0634142B2F56d73725597"
 ```
 where
 
@@ -36,7 +36,7 @@ PARAMETER_3 = Vesting Vault Address = Look up from 1. above
 
 EXAMPLE:
 ```
-npx hardhat verify --network rinkeby 0x2569698D08F6eBAa88DCf1857990225407b9f0b1 "0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735"
+npx hardhat verify --network rinkeby 0x9A5a99f71CcC699d89b334a92a4684934a178fC8 "0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735"
 ```
 
 where
@@ -66,7 +66,7 @@ PARAMETER_1 = DEFAULT_TOKEN_ADDRESS = `"0xc7AD46e0b8a400Bb3C915120d284AafbA8fc47
     * role(bytes32): `0xc4338366b9cfc07901c46677a3a32746bd05d5c114e4d0d293c468cff87acde0`
     * account(address): PROPOSER_ADDRESS
 
-## Configure Index and Fund SponsorPool
+## Configure Index
 
 1. Configure Index using Manager. Lookup parameters from PIP. Below are the testnet values:
     * SkinnyDAOracle on Rinkeby -> Contract -> Write Tab -> 1. configureIndex
@@ -87,19 +87,35 @@ PARAMETER_1 = DEFAULT_TOKEN_ADDRESS = `"0xc7AD46e0b8a400Bb3C915120d284AafbA8fc47
     * input (bytes32): `0x4d4649562d3134442d455448`(MFIV-14D-ETH)
 
     Copy and place new sponsor pool address here:
-        * `0xa961B5773Ea1f4441a053c16876460D04a698709`
+        * `0xfBf4DD0a2d5a1d927BCc899b31e91BBB32824993`
 
-3. Set approval for the SponsorPool to Spend the DAO multi-sig token. Must be sent from the DAO multi-sig.
+## Set Pool Fees
+
+1. Set Pool Fees using Manager:
+    * SkinnyDAOracle on Rinkeby -> Contract -> Write Tab -> 10. setPoolFees
+    * token (address): `0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735` (the bond token)
+    * mintFee (uint256): `10000000000000000` (10^16 = 1% || 10^18 = 100%)
+    * burnFee (uint256): `10000000000000000` (10^16 = 1% || 10^18 = 100%)
+    * payee (address): `0xfBf4DD0a2d5a1d927BCc899b31e91BBB32824993` (SponsorPool)
+    * NOTE: The sponsor pool should always be the payee.
+    * NOTE: Because fees are the check to keep stakers from flash removing stakes on incoming slash.
+
+**TESTS**
+-[] Can you set the pool fees to 100%: `1000000000000000000`? (FAIL)
+## Fund SponsorPool
+
+1. Set approval for the SponsorPool to Spend the DAO multi-sig token. Must be sent from the DAO multi-sig.
     * DAI Contract on Rinkeby: `0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735` -> Contract -> Write Tab -> 1. approve
-    * usr (address): `0xa961B5773Ea1f4441a053c16876460D04a698709`
+    * usr (address): `0xfBf4DD0a2d5a1d927BCc899b31e91BBB32824993`
     * wad (unit256): `115792089237316195423570985008687907853269984665640564039457584007913129639935`
     * NOTE: usr should be SponsorPool address that you look up in step 2.
     * NOTE: wad should be amount to send * 10^18 + 100
     * NOTE: Reset approval on mainnet to 0 after mint
 
-4. Deposit into the newly created SponsorPool with Mint:
-    * SponsorPool Contract:`0xa961B5773Ea1f4441a053c16876460D04a698709`  on Rinkeby -> Contract -> Write Tab -> 6. mint
+2. Deposit into the newly created SponsorPool with Mint (See TESTs below before minting):
+    * SponsorPool Contract:`0xfBf4DD0a2d5a1d927BCc899b31e91BBB32824993`  on Rinkeby -> Contract -> Write Tab -> 6. mint
     * _stakeAmount (uint256): amount to send * 10^18
+
 
 **TESTS**
 -[] Fund SponsorPool with less than enough tokens to cover a bond but more than enough to pay rewards. Can you relay? (FAIL)
@@ -110,8 +126,29 @@ PARAMETER_1 = DEFAULT_TOKEN_ADDRESS = `"0xc7AD46e0b8a400Bb3C915120d284AafbA8fc47
 1. Stake on the DAOracle website. Approval for the Token should be requested. If not, then follow the same steps for funding the SponsorPool. If you cannot find the StakingPool address you can relay an index. The staking pool will be the first address that the DAOracle contract sends to.
 
 **TESTS**
--[] Stake 1000 tokens. Return a bond from UMA as lost. Is the entire StakingPool slashed?
--[] Stake 100,000 tokens. Return a bond from UMA as lost. Is the correct amount from the StakingPool slashed?
+You will need to return bonds from UMA to complete some of these tests.
+
+-[] Stake 100 tokens. Is 1% taken and moved to the SponsorPool as a fee? (PASS)
+-[] Note on above. If you relayed already, then you will have more than 100 DAI in pool. Do you get those tokens?
+-[] If more than 100 tokens in unstake all and stake 100 again.
+-[] Unstake all tokens. Is 1% taken and moved to the SponsorPool as a fee? (PASS)
+-[] Stake 1000 tokens. Return a bond from UMA as lost. Is the entire StakingPool slashed?(PASS)
+-[] Stake 100,000 tokens. Check the accounting tokens. Is there a bug? Can you withdraw your full amount?
+-[] Return a bond from UMA as lost. Is the correct amount from the StakingPool slashed? (PASS)
+
+## SET VESTING TIME
+
+1. Go to SkinnyDAOracle on Etherscan: `0xE3383f3FdA18cFeb3490ce208EAE6c793b59b1fE`
+
+2. Contract -> Write -> Set Vesting Parameters (USE MANAGER)
+    * vestingTime (uint32) = `300`
+    * cliffTime (uint32) = `300` (This is one day)
+    * NOTE: for cliff vesting make the vestingTime and cliffTime the same length.
+
+3. Set cliff time to 6 months if everything passes: `15768000`
+
+**TESTS**
+-[] Set cliff to 5 minuts. Can you claim your rewards after a day?  (PASS)
 
 
 ## Returning Bonds From UMA
@@ -122,7 +159,8 @@ First you must push the price from the DVM:
 3. Contract -> Read -> 1. getImplementationAddress -> Enter 'Oracle' as byte32 = `0x4f7261636c65`
 4. Go to returned contract: `0xd227E520A3328eAe29951DEc5aF8162A5Bfb7fB0`
 5. Contract -> Write -> 1.Push Price:
-    * Find the parameters for push price by looking at the dispute transaction that was disputed on etherscan:
+    * It is easiest to put the dispute transaction into tenderly.co -> events -> PriceRequestAdd contains all params.
+    * Or look on etherscan at the dispute tx:
         1. Transaction -> Logs
         2. 9th log contains the following:
             * identifier (bytes32) -> topic 2 (NOTE: change to Hex)
@@ -140,6 +178,7 @@ Now return the price from the SkinnyOO:
 
 1. Go to the SkinnyOO: `0xAbE04Ace666294aefD65F991d78CE9F9218aFC67`
 2. Contract -> Write -> 10. Settle:
+    * It's easiest to use Tenderly.co and look at the Dispute tx -> events -> DisputePrice
     * You can use the transaction log from the DVM transaction to fill out most values:
         * requester (address) = `0xb380E171C0E559335b70eC02E16b783eF59f9F1D` (SkinnyDAOracle)
         * identifier (bytes32) = topic2 as Hex
@@ -207,11 +246,11 @@ Then look at events and copy the values from dispute price for.
 NOTE:  resolvedPrice always 0
 
 ```
-["0x4298D9098fBEf0AE5E21A0B8408D7889850964aa","0x06985aa459afaa7dd2a33f0e873bc297f2f2978f","0xc7ad46e0b8a400bb3c915120d284aafba8fc4735",false,"6367139814808473",0,1651422778,0,0,"7150000000000000000000",600]
+["0xE3383f3FdA18cFeb3490ce208EAE6c793b59b1fE","0x06985aa459afaa7dd2a33f0e873bc297f2f2978f","0xc7ad46e0b8a400bb3c915120d284aafba8fc4735",false,"7089898894349265",0,1651680969,0,0,"7150000000000000000000",600]
 
 ```
 
-## Tests
+## ADDITIONAL TESTS
 
 Verify the following checklists. (PASS / FAIL) denotes whether the test should pass or fail. E.g. FAIL means you should NOT be able to execute when testing.
 
