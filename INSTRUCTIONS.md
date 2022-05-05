@@ -101,7 +101,9 @@ PARAMETER_1 = DEFAULT_TOKEN_ADDRESS = `"0xc7AD46e0b8a400Bb3C915120d284AafbA8fc47
     * NOTE: Because fees are the check to keep stakers from flash removing stakes on incoming slash.
 
 **TESTS**
--[] Can you set the pool fees to 100%: `1000000000000000000`? (FAIL)
+
+- [] Can you set the pool fees to 100%: `1000000000000000000`? (FAIL)
+
 ## Fund SponsorPool
 
 1. Set approval for the SponsorPool to Spend the DAO multi-sig token. Must be sent from the DAO multi-sig.
@@ -118,8 +120,9 @@ PARAMETER_1 = DEFAULT_TOKEN_ADDRESS = `"0xc7AD46e0b8a400Bb3C915120d284AafbA8fc47
 
 
 **TESTS**
--[] Fund SponsorPool with less than enough tokens to cover a bond but more than enough to pay rewards. Can you relay? (FAIL)
--[] Fund SponsorPool with 10 million tokens. Can you relay? (PASS)
+
+- [] Fund SponsorPool with less than enough tokens to cover a bond but more than enough to pay rewards. Can you relay? (FAIL)
+- [] Fund SponsorPool with 10 million tokens. Can you relay? (PASS)
 
 ## Fund StakingPool
 
@@ -128,13 +131,13 @@ PARAMETER_1 = DEFAULT_TOKEN_ADDRESS = `"0xc7AD46e0b8a400Bb3C915120d284AafbA8fc47
 **TESTS**
 You will need to return bonds from UMA to complete some of these tests.
 
--[] Stake 100 tokens. Is 1% taken and moved to the SponsorPool as a fee? (PASS)
--[] Note on above. If you relayed already, then you will have more than 100 DAI in pool. Do you get those tokens?
--[] If more than 100 tokens in unstake all and stake 100 again.
--[] Unstake all tokens. Is 1% taken and moved to the SponsorPool as a fee? (PASS)
--[] Stake 1000 tokens. Return a bond from UMA as lost. Is the entire StakingPool slashed?(PASS)
--[] Stake 100,000 tokens. Check the accounting tokens. Is there a bug? Can you withdraw your full amount?
--[] Return a bond from UMA as lost. Is the correct amount from the StakingPool slashed? (PASS)
+- [] Stake 100 tokens. Is 1% taken and moved to the SponsorPool as a fee? (PASS)
+- [] Note on above. If you relayed already, then you will have more than 100 DAI in pool. Do you get those tokens?
+- [] If more than 100 tokens in unstake all and stake 100 again.
+- [] Unstake all tokens. Is 1% taken and moved to the SponsorPool as a fee? (PASS)
+- [] Stake 1000 tokens. Return a bond from UMA as lost. Is the entire StakingPool slashed?(PASS)
+- [] Stake 100,000 tokens. Check the accounting tokens. Is there a bug? Can you withdraw your full amount?
+- [] Return a bond from UMA as lost. Is the correct amount from the StakingPool slashed? (PASS)
 
 ## SET VESTING TIME
 
@@ -148,7 +151,7 @@ You will need to return bonds from UMA to complete some of these tests.
 3. Set cliff time to 6 months if everything passes: `15768000`
 
 **TESTS**
--[] Set cliff to 5 minuts. Can you claim your rewards after a day?  (PASS)
+- [] Set cliff to 5 minuts. Can you claim your rewards after a day?  (PASS)
 
 
 ## Returning Bonds From UMA
@@ -255,38 +258,38 @@ NOTE:  resolvedPrice always 0
 Verify the following checklists. (PASS / FAIL) denotes whether the test should pass or fail. E.g. FAIL means you should NOT be able to execute when testing.
 
 ### STAKING TESTS
--[] Can you stake from DAOracle website? (PASS)
-    -[] Are you charged the fee for staking? (PASS)
--[] Can you unstake from the DAOracle website? (PASS)
-    -[] Are you charged the fee for unstaking? (PASS)
+- [] Can you stake from DAOracle website? (PASS)
+    - [] Are you charged the fee for staking? (PASS)
+- [] Can you unstake from the DAOracle website? (PASS)
+    - [] Are you charged the fee for unstaking? (PASS)
 
 ### RELAY TESTS
 
--[] Can you relay from DAOracle website? (PASS)
-    -[] Are tokens sent to the correct addresses?
+- [] Can you relay from DAOracle website? (PASS)
+    - [] Are tokens sent to the correct addresses?
         * Pigeon Vesting
         * Creator
         * StakingPool
--[] Can you relay if there is NOT enough tokens to cover rewards? (FAIL)
--[] Can you relay if there is enough tokens to cover rewards but NOT a bond? (FAIL)
--[] Can you relay proposals besides the most recent? (FAIL)
--[] Can you relay after maximum number of bonds are out? (FAIL)
+- [] Can you relay if there is NOT enough tokens to cover rewards? (FAIL)
+- [] Can you relay if there is enough tokens to cover rewards but NOT a bond? (FAIL)
+- [] Can you relay proposals besides the most recent? (FAIL)
+- [] Can you relay after maximum number of bonds are out? (FAIL)
 
 ### VESTING TESTS
 
--[] Can you claim tokens before waterfall period is up? (FAIL)
--[] Can you claim tokens after waterfall period is up? (PASS)
+- [] Can you claim tokens before waterfall period is up? (FAIL)
+- [] Can you claim tokens after waterfall period is up? (PASS)
 
 ### DISPUTE TESTS
--[] Can you dispute from the website if you have enough tokens to post bond? (PASS)
--[] Can you dispute from the website if you do NOT have enough tokens to post bond? (PASS)
--[] Are the correct bond amounts taken from your wallet and SponsorPool? (PASS)
+- [] Can you dispute from the website if you have enough tokens to post bond? (PASS)
+- [] Can you dispute from the website if you do NOT have enough tokens to post bond? (PASS)
+- [] Are the correct bond amounts taken from your wallet and SponsorPool? (PASS)
 
 ### RETURN DISPUTE TESTS
 
--[] On DVM win does the Sponsor Pool receive all tokens (bond + winnings)? (PASS)
--[] On DVM loss is Staking Pool slashed for bond amount and is it deposited in Sponsor Pool? (PASS)
-    -[] Does the staking Pool slash all tokens if there are not enough tokens to cover the bond? 
+- [] On DVM win does the Sponsor Pool receive all tokens (bond + winnings)? (PASS)
+- [] On DVM loss is Staking Pool slashed for bond amount and is it deposited in Sponsor Pool? (PASS)
+    - [] Does the staking Pool slash all tokens if there are not enough tokens to cover the bond? 
 
 ### MIX TESTS
 -[] Return a bond so one less than maximum number is out, can you relay? (PASS)
