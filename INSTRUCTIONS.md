@@ -118,8 +118,8 @@ PARAMETER_1 = DEFAULT_TOKEN_ADDRESS = `"0xc7AD46e0b8a400Bb3C915120d284AafbA8fc47
 
 
 **TESTS**
--[] Fund SponsorPool with less than enough tokens to cover a bond but more than enough to pay rewards. Can you relay? (FAIL)
--[] Fund SponsorPool with 10 million tokens. Can you relay? (PASS)
+-[ ] Fund SponsorPool with less than enough tokens to cover a bond but more than enough to pay rewards. Can you relay? (FAIL)
+-[ ] Fund SponsorPool with 10 million tokens. Can you relay? (PASS)
 
 ## Fund StakingPool
 

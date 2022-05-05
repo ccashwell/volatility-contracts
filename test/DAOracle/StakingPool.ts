@@ -67,24 +67,24 @@ describe("StakingPool", () => {
       }
     });
 
-    it("assigns 1,000 shares for the first deposit", async () => {
+    it("assigns 10 shares for the first deposit", async () => {
       const [admin, user]: Signer[] = await ethers.getSigners();
       await pool.connect(user).mint(100);
-      expect(await pool.balanceOf(await user.getAddress())).to.equal(BN(1000));
+      expect(await pool.balanceOf(await user.getAddress())).to.equal(BN(10));
     });
 
     it("mints a proportional number of shares for new stakers", async () => {
       const [admin, user1, user2, user3]: Signer[] = await ethers.getSigners();
       await pool.connect(user1).mint(100);
-      expect(await pool.totalSupply()).to.equal(BN(1000));
+      expect(await pool.totalSupply()).to.equal(BN(10));
 
       await pool.connect(user2).mint(10);
-      expect(await pool.totalSupply()).to.equal(BN(1100));
-      expect(await pool.balanceOf(await user2.getAddress())).to.equal(BN(100));
+      expect(await pool.totalSupply()).to.equal(BN(11));
+      expect(await pool.balanceOf(await user2.getAddress())).to.equal(BN(1));
 
       await pool.connect(user3).mint(10);
-      expect(await pool.totalSupply()).to.equal(BN(1200));
-      expect(await pool.balanceOf(await user3.getAddress())).to.equal(BN(100));
+      expect(await pool.totalSupply()).to.equal(BN(12));
+      expect(await pool.balanceOf(await user3.getAddress())).to.equal(BN(1));
     });
 
     it("charges a fee if one is set", async () => {
@@ -116,19 +116,19 @@ describe("StakingPool", () => {
       const [admin, user1]: Signer[] = await ethers.getSigners();
       const shares: BigNumber = await pool.balanceOf(await user1.getAddress());
 
-      assert((await pool.totalSupply()).eq(3000));
+      assert((await pool.totalSupply()).eq(30));
       await pool.connect(user1).burn(shares);
-      expect(await pool.totalSupply()).to.equal(2000);
+      expect(await pool.totalSupply()).to.equal(20);
     });
 
     it("reduces the staker's balance", async () => {
       const [admin, user1]: Signer[] = await ethers.getSigners();
       const shares: BigNumber = await pool.balanceOf(await user1.getAddress());
 
-      assert(shares.eq(1000));
+      assert(shares.eq(10));
       await pool.connect(user1).burn(shares.div(2));
 
-      expect(await pool.balanceOf(await user1.getAddress())).to.equal(500);
+      expect(await pool.balanceOf(await user1.getAddress())).to.equal(5);
     });
 
     it("returns underlying tokens", async () => {
@@ -136,7 +136,7 @@ describe("StakingPool", () => {
       const user: string = await user1.getAddress();
 
       const balance: BigNumber = await testToken.balanceOf(user);
-      await pool.connect(user1).burn(1000);
+      await pool.connect(user1).burn(10);
 
       expect(await testToken.balanceOf(user)).to.be.above(balance);
     });
@@ -155,7 +155,7 @@ describe("StakingPool", () => {
         .mul(totalStaked)
         .div(totalShares);
 
-      await pool.connect(user1).burn(1000);
+      await pool.connect(user1).burn(10);
 
       expect(await testToken.balanceOf(user)).to.equal(
         initialBalance.add(expectedPayout)
