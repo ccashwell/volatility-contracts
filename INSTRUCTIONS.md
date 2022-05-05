@@ -7,7 +7,6 @@ This document describes how to deploy and set up the DAOracle.
 `npx hardhat run scripts/deploy.ts --network rinkeby`
 
 Copy addresses and place them here (use find and replace):
-
     * Rinkeby
        * VestingVault deployed to: `0x4272c990a0736D4362D0634142B2F56d73725597`
        * DAOracleHelpers library deployed to: `0xFDf3Bea2086352E08d3CDFcfC717915321889C6B`
