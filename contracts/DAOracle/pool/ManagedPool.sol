@@ -80,12 +80,10 @@ abstract contract ManagedPool is AccessControl, ERC20 {
       shares = (_stakeAmount * oldShares) / oldBalance;
 
     } else if (oldShares != 0 && oldBalance == 0 ){
-       //while highly improbable, oldBalance can = 0 in the following cases:
-       //StakingPool - the entire pool is slashed
-       //SponsorPool - all tokens are removed as bonds (there is a require to stop this)
-       //Both Pools - Fees are set to 100% (there is a require to stops)
-      
-       //we make the new shares worth 99.999% of the pool
+       // While highly improbable, oldBalance can = 0 if slash removes all tokens
+       // Because this is caused by slash and not burn the uniswap fix of minting initial
+       // tokens to the burn address will not work
+
       shares = oldShares * 10**3;
       
     } else{
