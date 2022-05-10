@@ -28,9 +28,9 @@ abstract contract ManagedPool is AccessControl, ERC20 {
    * Formula: fee = tokens * mintOrBurnFee / 1e18
    * Example: 1000 DAI deposit * (0.1 * 10**18) / 10**18 = 100 DAI fee
    */
+  address public feePayee;
   uint256 public mintFee;
   uint256 public burnFee;
-  address public feePayee;
 
   event Created(address pool, IERC20 underlying);
   event FeesChanged(uint256 mintFee, uint256 burnFee, address payee);
@@ -84,12 +84,18 @@ abstract contract ManagedPool is AccessControl, ERC20 {
        // Because this is caused by slash and not burn the uniswap fix of minting initial
        // tokens to the burn address will not work
 
-      shares = oldShares * 10**3;
+      shares = oldShares * 1000;
       
     } else{
-      // if no shares exist, just assign 10 shares (it's arbitrary)
-      shares = 10;
+      // if no shares exist, multiply the stake amount times 1000 to ensure the mimum
+      // stakable amount is 0.001 tokens.
+      shares = _stakeAmount * 1000;
     }
+
+    require(
+      shares > 0,
+      "shares = 0"
+    );
 
     // Transfer shares to caller
     _mint(msg.sender, shares);
@@ -113,7 +119,7 @@ abstract contract ManagedPool is AccessControl, ERC20 {
     _burn(msg.sender, _shareAmount);
 
     // Calculate the fee for burning
-    uint256 fee = getBurnFee(tokens);
+    uint256 fee = (tokens * burnFee) / 1e18;
     if (fee != 0) {
       tokens -= fee;
       stakedToken.safeTransfer(feePayee, fee);
@@ -125,11 +131,12 @@ abstract contract ManagedPool is AccessControl, ERC20 {
     emit Payout(msg.sender, tokens, _shareAmount);
   }
 
+/*
   /**
    * @dev Calculate the minting fee
    * @param _amount The number of tokens being staked
    * @return fee The calculated fee value
-   */
+   *//*
   function getMintFee(uint256 _amount) public view returns (uint256 fee) {
     fee = (_amount * mintFee) / 1e18;
   }
@@ -138,11 +145,11 @@ abstract contract ManagedPool is AccessControl, ERC20 {
    * @dev Calculate the burning fee
    * @param _amount The number of pool tokens being burned
    * @return fee The calculated fee value
-   */
+   *//*
   function getBurnFee(uint256 _amount) public view returns (uint256 fee) {
     fee = (_amount * burnFee) / 1e18;
   }
-
+*/
   /**
    * @dev Update fee configuration
    * @param _mintFee The new minting fee

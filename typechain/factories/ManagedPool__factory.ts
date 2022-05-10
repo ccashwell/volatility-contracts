@@ -417,44 +417,6 @@ const _abi = [
   {
     inputs: [
       {
-        internalType: "uint256",
-        name: "_amount",
-        type: "uint256",
-      },
-    ],
-    name: "getBurnFee",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "fee",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "_amount",
-        type: "uint256",
-      },
-    ],
-    name: "getMintFee",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "fee",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
         internalType: "bytes32",
         name: "role",
         type: "bytes32",

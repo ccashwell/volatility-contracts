@@ -32,8 +32,6 @@ interface SponsorPoolInterface extends ethers.utils.Interface {
     "decimals()": FunctionFragment;
     "decreaseAllowance(address,uint256)": FunctionFragment;
     "feePayee()": FunctionFragment;
-    "getBurnFee(uint256)": FunctionFragment;
-    "getMintFee(uint256)": FunctionFragment;
     "getRoleAdmin(bytes32)": FunctionFragment;
     "grantRole(bytes32,address)": FunctionFragment;
     "hasRole(bytes32,address)": FunctionFragment;
@@ -80,14 +78,6 @@ interface SponsorPoolInterface extends ethers.utils.Interface {
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "feePayee", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "getBurnFee",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getMintFee",
-    values: [BigNumberish]
-  ): string;
   encodeFunctionData(
     functionFragment: "getRoleAdmin",
     values: [BytesLike]
@@ -174,8 +164,6 @@ interface SponsorPoolInterface extends ethers.utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "feePayee", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "getBurnFee", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "getMintFee", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getRoleAdmin",
     data: BytesLike
@@ -380,16 +368,6 @@ export class SponsorPool extends BaseContract {
 
     feePayee(overrides?: CallOverrides): Promise<[string]>;
 
-    getBurnFee(
-      _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { fee: BigNumber }>;
-
-    getMintFee(
-      _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { fee: BigNumber }>;
-
     getRoleAdmin(role: BytesLike, overrides?: CallOverrides): Promise<[string]>;
 
     grantRole(
@@ -513,16 +491,6 @@ export class SponsorPool extends BaseContract {
 
   feePayee(overrides?: CallOverrides): Promise<string>;
 
-  getBurnFee(
-    _amount: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  getMintFee(
-    _amount: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
   getRoleAdmin(role: BytesLike, overrides?: CallOverrides): Promise<string>;
 
   grantRole(
@@ -645,16 +613,6 @@ export class SponsorPool extends BaseContract {
     ): Promise<boolean>;
 
     feePayee(overrides?: CallOverrides): Promise<string>;
-
-    getBurnFee(
-      _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getMintFee(
-      _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
 
     getRoleAdmin(role: BytesLike, overrides?: CallOverrides): Promise<string>;
 
@@ -960,16 +918,6 @@ export class SponsorPool extends BaseContract {
 
     feePayee(overrides?: CallOverrides): Promise<BigNumber>;
 
-    getBurnFee(
-      _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getMintFee(
-      _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     getRoleAdmin(
       role: BytesLike,
       overrides?: CallOverrides
@@ -1101,16 +1049,6 @@ export class SponsorPool extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     feePayee(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getBurnFee(
-      _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getMintFee(
-      _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
 
     getRoleAdmin(
       role: BytesLike,
