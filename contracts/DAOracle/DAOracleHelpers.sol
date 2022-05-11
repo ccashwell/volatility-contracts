@@ -3,6 +3,7 @@ pragma solidity ^0.8.9;
 
 import "./SkinnyDAOracle.sol";
 import "./pool/SponsorPool.sol";
+import "hardhat/console.sol";
 
 library DAOracleHelpers {
   using SafeERC20 for IERC20;
@@ -43,17 +44,23 @@ library DAOracleHelpers {
   ) public {
     IERC20 token = index.bondToken;
 
+  
+
     // Pull in funds from sponsor to cover the proposal bond
     token.safeTransferFrom(index.sponsor, address(this), index.bondAmount);
 
     // Pull in funds from disputer to match the bond
     token.safeTransferFrom(msg.sender, address(this), index.bondAmount);
 
+
+   // Bytes32 to bytes. Use instead of abi.encodePacked(arg); so there are no padded 0
+    bytes bytesData = _bytes32ToBytes(proposal.data);   
+
     // Create the request + proposal via UMA's OO
     uint256 bond = oracle.requestAndProposePriceFor(
       externalIdentifier,
       proposal.timestamp,
-      abi.encodePacked(proposal.data),
+      bytesData,   
       token,
       0,
       index.bondAmount,
@@ -76,7 +83,7 @@ library DAOracleHelpers {
     oracle.disputePriceFor(
       externalIdentifier,
       proposal.timestamp,
-      abi.encodePacked(proposal.data),
+      bytesData,   
       request,
       msg.sender,
       address(this)
@@ -93,4 +100,21 @@ library DAOracleHelpers {
   {
     return new SponsorPool(ERC20(address(index.bondToken)));
   }
+
+// The DVM expects bytes with no padded 0. Using abi.encodePacked packs 0 when moving
+// from byte32 to bytes. This removes the padded 0 so that the DVM can read the ancillaryData.
+function _bytes32ToBytes(bytes32 data) internal pure returns (bytes memory) {
+    uint i = 0;
+    while (i < 32 && data[i] != 0) {
+        ++i;
+    }
+    bytes memory result = new bytes(i);
+    i = 0;
+    while (i < 32 && data[i] != 0) {
+        result[i] = data[i];
+        ++i;
+    }
+    return result;
+}
+
 }
