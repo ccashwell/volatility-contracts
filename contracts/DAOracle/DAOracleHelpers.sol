@@ -3,7 +3,6 @@ pragma solidity ^0.8.9;
 
 import "./SkinnyDAOracle.sol";
 import "./pool/SponsorPool.sol";
-import "hardhat/console.sol";
 
 library DAOracleHelpers {
   using SafeERC20 for IERC20;
@@ -54,7 +53,7 @@ library DAOracleHelpers {
 
 
    // Bytes32 to bytes. Use instead of abi.encodePacked(arg); so there are no padded 0
-    bytes bytesData = _bytes32ToBytes(proposal.data);   
+    bytes memory bytesData = _bytes32ToBytes(proposal.data);   
 
     // Create the request + proposal via UMA's OO
     uint256 bond = oracle.requestAndProposePriceFor(
