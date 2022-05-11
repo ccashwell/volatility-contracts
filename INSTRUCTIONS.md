@@ -9,10 +9,10 @@ This document describes how to deploy and set up the DAOracle.
 Copy addresses and place them here (use find and replace):
 
     * Rinkeby
-       * VestingVault deployed to: `0x4272c990a0736D4362D0634142B2F56d73725597`
-       * DAOracleHelpers library deployed to: `0xFDf3Bea2086352E08d3CDFcfC717915321889C6B`
-       * SkinnyDAOracle deployed to: `0xE3383f3FdA18cFeb3490ce208EAE6c793b59b1fE`
-       * SponsorPool deployed to: `0x9A5a99f71CcC699d89b334a92a4684934a178fC8`
+       * VestingVault deployed to: `0x908b00b8265ae7E1C3ba69c9B3E00e5D97b03F5F`
+       * DAOracleHelpers library deployed to: `0xC44b0D7A072227ac15352D9FF35307E7873444fB`
+       * SkinnyDAOracle deployed to: `0x0f98c603B7962e845ae1B00a23c836C08AA8b922`
+       * SponsorPool deployed to: `0x703aA92C4628B44E2c2fAA62A5862Dcc9381c639`
 
 2. Verify SkinnyDAOracle on Etherscan:
 
@@ -20,7 +20,7 @@ Copy addresses and place them here (use find and replace):
 
 Example:
 ```
-npx hardhat verify --network rinkeby "0xE3383f3FdA18cFeb3490ce208EAE6c793b59b1fE" "0x566f6c6174696c69747944414f7261636c650000000000000000000000000000" "0xAbE04Ace666294aefD65F991d78CE9F9218aFC67" "0x4272c990a0736D4362D0634142B2F56d73725597"
+npx hardhat verify --network rinkeby "0x0f98c603B7962e845ae1B00a23c836C08AA8b922" "0x566f6c6174696c69747944414f7261636c650000000000000000000000000000" "0xAbE04Ace666294aefD65F991d78CE9F9218aFC67" "0x908b00b8265ae7E1C3ba69c9B3E00e5D97b03F5F"
 ```
 where
 
@@ -36,7 +36,7 @@ PARAMETER_3 = Vesting Vault Address = Look up from 1. above
 
 EXAMPLE:
 ```
-npx hardhat verify --network rinkeby 0x9A5a99f71CcC699d89b334a92a4684934a178fC8 "0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735"
+npx hardhat verify --network rinkeby 0x703aA92C4628B44E2c2fAA62A5862Dcc9381c639 "0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735"
 ```
 
 where
@@ -87,7 +87,7 @@ PARAMETER_1 = DEFAULT_TOKEN_ADDRESS = `"0xc7AD46e0b8a400Bb3C915120d284AafbA8fc47
     * input (bytes32): `0x4d4649562d3134442d455448`(MFIV-14D-ETH)
 
     Copy and place new sponsor pool address here:
-        * `0xfBf4DD0a2d5a1d927BCc899b31e91BBB32824993`
+        * `0x78c08d7242c80279fcd712E87B7197819a7d37b9`
 
 ## Set Pool Fees
 
@@ -96,7 +96,7 @@ PARAMETER_1 = DEFAULT_TOKEN_ADDRESS = `"0xc7AD46e0b8a400Bb3C915120d284AafbA8fc47
     * token (address): `0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735` (the bond token)
     * mintFee (uint256): `10000000000000000` (10^16 = 1% || 10^18 = 100%)
     * burnFee (uint256): `10000000000000000` (10^16 = 1% || 10^18 = 100%)
-    * payee (address): `0xfBf4DD0a2d5a1d927BCc899b31e91BBB32824993` (SponsorPool)
+    * payee (address): `0x78c08d7242c80279fcd712E87B7197819a7d37b9` (SponsorPool)
     * NOTE: The sponsor pool should always be the payee.
     * NOTE: Because fees are the check to keep stakers from flash removing stakes on incoming slash.
 
@@ -106,14 +106,14 @@ PARAMETER_1 = DEFAULT_TOKEN_ADDRESS = `"0xc7AD46e0b8a400Bb3C915120d284AafbA8fc47
 
 1. Set approval for the SponsorPool to Spend the DAO multi-sig token. Must be sent from the DAO multi-sig.
     * DAI Contract on Rinkeby: `0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735` -> Contract -> Write Tab -> 1. approve
-    * usr (address): `0xfBf4DD0a2d5a1d927BCc899b31e91BBB32824993`
+    * usr (address): `0x78c08d7242c80279fcd712E87B7197819a7d37b9`
     * wad (unit256): `115792089237316195423570985008687907853269984665640564039457584007913129639935`
     * NOTE: usr should be SponsorPool address that you look up in step 2.
     * NOTE: wad should be amount to send * 10^18 + 100
     * NOTE: Reset approval on mainnet to 0 after mint
 
 2. Deposit into the newly created SponsorPool with Mint (See TESTs below before minting):
-    * SponsorPool Contract:`0xfBf4DD0a2d5a1d927BCc899b31e91BBB32824993`  on Rinkeby -> Contract -> Write Tab -> 6. mint
+    * SponsorPool Contract:`0x78c08d7242c80279fcd712E87B7197819a7d37b9`  on Rinkeby -> Contract -> Write Tab -> 6. mint
     * _stakeAmount (uint256): amount to send * 10^18
 
 
@@ -129,6 +129,7 @@ PARAMETER_1 = DEFAULT_TOKEN_ADDRESS = `"0xc7AD46e0b8a400Bb3C915120d284AafbA8fc47
 You will need to return bonds from UMA to complete some of these tests.
 
 -[] Stake 100 tokens. Is 1% taken and moved to the SponsorPool as a fee? (PASS)
+-[] Stake 0.00000001 tokens. Is 1% taken out? (PASS)
 -[] Note on above. If you relayed already, then you will have more than 100 DAI in pool. Do you get those tokens?
 -[] If more than 100 tokens in unstake all and stake 100 again.
 -[] Unstake all tokens. Is 1% taken and moved to the SponsorPool as a fee? (PASS)
@@ -138,7 +139,7 @@ You will need to return bonds from UMA to complete some of these tests.
 
 ## SET VESTING TIME
 
-1. Go to SkinnyDAOracle on Etherscan: `0xE3383f3FdA18cFeb3490ce208EAE6c793b59b1fE`
+1. Go to SkinnyDAOracle on Etherscan: `0x0f98c603B7962e845ae1B00a23c836C08AA8b922`
 
 2. Contract -> Write -> Set Vesting Parameters (USE MANAGER)
     * vestingTime (uint32) = `300`
@@ -246,7 +247,7 @@ Then look at events and copy the values from dispute price for.
 NOTE:  resolvedPrice always 0
 
 ```
-["0xE3383f3FdA18cFeb3490ce208EAE6c793b59b1fE","0x06985aa459afaa7dd2a33f0e873bc297f2f2978f","0xc7ad46e0b8a400bb3c915120d284aafba8fc4735",false,"7089898894349265",0,1651680969,0,0,"7150000000000000000000",600]
+["0x0f98c603B7962e845ae1B00a23c836C08AA8b922","0x06985aa459afaa7dd2a33f0e873bc297f2f2978f","0xc7ad46e0b8a400bb3c915120d284aafba8fc4735",false,"7089898894349265",0,1651680969,0,0,"7150000000000000000000",600]
 
 ```
 

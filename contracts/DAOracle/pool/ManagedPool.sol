@@ -87,15 +87,11 @@ abstract contract ManagedPool is AccessControl, ERC20 {
       shares = oldShares * 1000;
       
     } else{
-      // if no shares exist, multiply the stake amount times 1000 to ensure the mimum
-      // stakable amount is 0.001 tokens.
-      shares = _stakeAmount * 1000;
+      // setting shares to _stakeAmount insures that any amount can be staked. If you choose an
+      // arbitrarily low number (e.g. 1000 shares) then subsequent smaller shares may be = 0.
+      shares = _stakeAmount;
     }
 
-    require(
-      shares > 0,
-      "shares = 0"
-    );
 
     // Transfer shares to caller
     _mint(msg.sender, shares);
