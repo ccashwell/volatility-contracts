@@ -53,7 +53,7 @@ library DAOracleHelpers {
 
 
    // Bytes32 to bytes. Use instead of abi.encodePacked(arg); so there are no padded 0
-    bytes memory bytesData = _bytes32ToBytes(proposal.data);   
+    bytes memory bytesData = _convertIdentifierToBytes(proposal.data);   
 
     // Create the request + proposal via UMA's OO
     uint256 bond = oracle.requestAndProposePriceFor(
@@ -100,9 +100,12 @@ library DAOracleHelpers {
     return new SponsorPool(ERC20(address(index.bondToken)));
   }
 
-// The DVM expects bytes with no padded 0. Using abi.encodePacked packs 0 when moving
-// from byte32 to bytes. This removes the padded 0 so that the DVM can read the ancillaryData.
-function _bytes32ToBytes(bytes32 data) internal pure returns (bytes memory) {
+/** WARNING: Here be dragons. 
+This function serves the specific purpose of changning the identifier from bytes32 to bytes.
+The UMA's DVM expects bytes with no padded 0, which this function accomplishes.
+@param data - should always be an identifier that is an encoded string. This removes the possiblility
+of 0 being in the data. **/
+function _convertIdentifierToBytes(bytes32 data) internal pure returns (bytes memory) {
     uint i = 0;
     while (i < 32 && data[i] != 0) {
         ++i;
