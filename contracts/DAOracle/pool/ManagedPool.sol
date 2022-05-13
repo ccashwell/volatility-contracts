@@ -75,18 +75,10 @@ abstract contract ManagedPool is AccessControl, ERC20 {
     }
 
     // Calculate the pool shares for the new deposit
-    if (oldShares != 0 && oldBalance != 0) {
+    if (oldShares != 0) {
       // shares = stake * oldShares / oldBalance
       shares = (_stakeAmount * oldShares) / oldBalance;
-
-    } else if (oldShares != 0 && oldBalance == 0 ){
-       // While highly improbable, oldBalance can = 0 if slash removes all tokens
-       // Because this is caused by slash and not burn the uniswap fix of minting initial
-       // tokens to the burn address will not work
-
-      shares = oldShares * 1000;
-      
-    } else{
+    } else {
       // setting shares to _stakeAmount insures that any amount can be staked. If you choose an
       // arbitrarily low number (e.g. 1000 shares) then subsequent smaller shares may be = 0.
       shares = _stakeAmount;

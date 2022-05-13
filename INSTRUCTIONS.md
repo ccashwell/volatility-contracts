@@ -9,10 +9,10 @@ This document describes how to deploy and set up the DAOracle.
 Copy addresses and place them here (use find and replace):
 
     * Rinkeby
-       * VestingVault deployed to: `0xE6A2E976fF6Da35505025f5E7665Be0B9b2ddb08`
-       * DAOracleHelpers library deployed to: `0xEa576AdC33b55a30F3DFcD55FffC898af3C5e344`
-       * SkinnyDAOracle deployed to: `0x5909FFFfcC3448F9a428Fc18566f09e1C6dCe9e9`
-       * SponsorPool deployed to: `0x629BE00E7C9160503A4e028BAC5F18d995813E3e`
+       * VestingVault deployed to: `0xA70d3a090ec6c6B1b6dC9Cf68f636295b6443D5F`
+       * DAOracleHelpers library deployed to: `0xca5574638F8f5521D6de56477b4d052eE2A81eB6`
+       * SkinnyDAOracle deployed to: `0xc99ABE8928C4394505E2fB9e7eC2B961AbB6aB12`
+       * SponsorPool deployed to: `0x402078f811262C2929e3981C6D9d21E16c28fdC6`
 
 2. Verify SkinnyDAOracle on Etherscan:
 
@@ -20,7 +20,7 @@ Copy addresses and place them here (use find and replace):
 
 Example:
 ```
-npx hardhat verify --network rinkeby "0x5909FFFfcC3448F9a428Fc18566f09e1C6dCe9e9" "0x566f6c6174696c69747944414f7261636c650000000000000000000000000000" "0xAbE04Ace666294aefD65F991d78CE9F9218aFC67" "0xE6A2E976fF6Da35505025f5E7665Be0B9b2ddb08"
+npx hardhat verify --network rinkeby "0xc99ABE8928C4394505E2fB9e7eC2B961AbB6aB12" "0x566f6c6174696c69747944414f7261636c650000000000000000000000000000" "0xAbE04Ace666294aefD65F991d78CE9F9218aFC67" "0xA70d3a090ec6c6B1b6dC9Cf68f636295b6443D5F"
 ```
 where
 
@@ -36,7 +36,7 @@ PARAMETER_3 = Vesting Vault Address = Look up from 1. above
 
 EXAMPLE:
 ```
-npx hardhat verify --network rinkeby 0x629BE00E7C9160503A4e028BAC5F18d995813E3e "0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735"
+npx hardhat verify --network rinkeby 0x402078f811262C2929e3981C6D9d21E16c28fdC6 "0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735"
 ```
 
 where
@@ -87,7 +87,7 @@ PARAMETER_1 = DEFAULT_TOKEN_ADDRESS = `"0xc7AD46e0b8a400Bb3C915120d284AafbA8fc47
     * input (bytes32): `0x4d4649562d3134442d455448`(MFIV-14D-ETH)
 
     Copy and find replace new sponsor pool address here:
-        * `0xF4F5538B688FD4b5a9e405173c70f70710ee1d17`
+        * ` 0x54796a8BB900da1553b18412638D6D62975a5141`
 
 ## Set Pool Fees
 
@@ -96,7 +96,7 @@ PARAMETER_1 = DEFAULT_TOKEN_ADDRESS = `"0xc7AD46e0b8a400Bb3C915120d284AafbA8fc47
     * token (address): `0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735` (the bond token)
     * mintFee (uint256): `10000000000000000` (10^16 = 1% || 10^18 = 100%)
     * burnFee (uint256): `10000000000000000` (10^16 = 1% || 10^18 = 100%)
-    * payee (address): `0xF4F5538B688FD4b5a9e405173c70f70710ee1d17` (SponsorPool)
+    * payee (address): ` 0x54796a8BB900da1553b18412638D6D62975a5141` (SponsorPool)
     * NOTE: The sponsor pool should always be the payee.
     * NOTE: Because fees are the check to keep stakers from flash removing stakes on incoming slash.
 
@@ -106,20 +106,20 @@ PARAMETER_1 = DEFAULT_TOKEN_ADDRESS = `"0xc7AD46e0b8a400Bb3C915120d284AafbA8fc47
 
 1. Set approval for the SponsorPool to Spend the DAO multi-sig token. Must be sent from the DAO multi-sig.
     * DAI Contract on Rinkeby: `0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735` -> Contract -> Write Tab -> 1. approve
-    * usr (address): `0xF4F5538B688FD4b5a9e405173c70f70710ee1d17`
+    * usr (address): ` 0x54796a8BB900da1553b18412638D6D62975a5141`
     * wad (unit256): `115792089237316195423570985008687907853269984665640564039457584007913129639935`
     * NOTE: usr should be SponsorPool address that you look up in step 2.
     * NOTE: wad should be amount to send * 10^18 + 100
     * NOTE: Reset approval on mainnet to 0 after mint
 
 2. Deposit into the newly created SponsorPool with Mint (See TESTs below before minting):
-    * SponsorPool Contract:`0xF4F5538B688FD4b5a9e405173c70f70710ee1d17`  on Rinkeby -> Contract -> Write Tab -> 6. mint
+    * SponsorPool Contract:` 0x54796a8BB900da1553b18412638D6D62975a5141`  on Rinkeby -> Contract -> Write Tab -> 6. mint
     * _stakeAmount (uint256): amount to send * 10^18
 
 
 **TESTS**
 -[ ] Fund SponsorPool with less than enough tokens to cover a bond but more than enough to pay rewards. Can you relay? (FAIL)
--[ ] Fund SponsorPool with 10 million tokens. Can you relay? (PASS)
+-[ ] Fund SponsorPool with 1 million tokens. Can you relay? (PASS)
 
 ## Fund StakingPool
 
@@ -131,18 +131,13 @@ You will need to return bonds from UMA to complete some of these tests.
 -[] Stake 100 tokens. Is 1% taken and moved to the SponsorPool as a fee? (PASS)
 -[] Stake 0.00000001 tokens. Is 1% taken out? (PASS)
 -[] Note on above. If you relayed already, then you will have more than 100 DAI in pool. Do you get those tokens?
--[] If more than 100 tokens in unstake all and stake 100 again.
 -[] Unstake all tokens. Is 1% taken and moved to the SponsorPool as a fee? (PASS)
--[] Stake 1000 tokens. Return a bond from UMA as lost. Is the entire StakingPool slashed?(PASS)
--[] Repeat
--[] Repeat
--[] Repeat
--[] Stake 100,000 tokens. Check the accounting tokens. Is there a bug? Can you withdraw your full amount? How many times could you be slashed before you create too many tokens?
--[] Return a bond from UMA as lost. Is the correct amount from the StakingPool slashed? (PASS)
+-[] Stake 1,000 tokens. Return a bond from UMA as lost. Is the entire StakingPool slashed?(FAIL)
+-[] Stake 10,000 tokens. Return a bond from UMA as lost. Is the correct amount from the StakingPool slashed? (PASS)
 
 ## SET VESTING TIME
 
-1. Go to SkinnyDAOracle on Etherscan: `0x5909FFFfcC3448F9a428Fc18566f09e1C6dCe9e9`
+1. Go to SkinnyDAOracle on Etherscan: `0xc99ABE8928C4394505E2fB9e7eC2B961AbB6aB12`
 
 2. Contract -> Write -> Set Vesting Parameters (USE MANAGER)
     * vestingTime (uint32) = `300`
@@ -152,7 +147,7 @@ You will need to return bonds from UMA to complete some of these tests.
 3. Set cliff time to 6 months if everything passes: `15768000`
 
 **TESTS**
--[] Set cliff to 5 minuts. Can you claim your rewards after a day?  (PASS)
+-[] Set cliff to 5 minutes. Can you claim your rewards after a day?  (PASS)
 
 
 ## Returning Bonds From UMA
@@ -250,7 +245,7 @@ Then look at events and copy the values from dispute price for.
 NOTE:  resolvedPrice always 0
 
 ```
-["0x5909FFFfcC3448F9a428Fc18566f09e1C6dCe9e9","0x06985aa459afaa7dd2a33f0e873bc297f2f2978f","0xc7ad46e0b8a400bb3c915120d284aafba8fc4735",false,"0",0,1652383352,0,0,"7150000000000000000000",600]
+["0xc99ABE8928C4394505E2fB9e7eC2B961AbB6aB12","0x06985aa459afaa7dd2a33f0e873bc297f2f2978f","0xc7ad46e0b8a400bb3c915120d284aafba8fc4735",false,"0",0,1652469670,0,0,"7150000000000000000000",600]
 
 ```
 
