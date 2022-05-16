@@ -88,6 +88,7 @@ PARAMETER_1 = DEFAULT_TOKEN_ADDRESS = `"0xc7AD46e0b8a400Bb3C915120d284AafbA8fc47
 
     Copy and find replace new sponsor pool address here:
         * ` 0x54796a8BB900da1553b18412638D6D62975a5141`
+        * NOTE: This contract may need to be verified on etherscan.
 
 ## Set Pool Fees
 
