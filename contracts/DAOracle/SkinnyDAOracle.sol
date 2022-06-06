@@ -13,8 +13,6 @@ import "./vault/IVestingVault.sol";
 import "./pool/StakingPool.sol";
 import "./pool/SponsorPool.sol";
 
-
-
 /**
  * @title SkinnyDAOracle
  * @dev This contract is the core of the Volatility Protocol DAOracle System.
@@ -104,10 +102,9 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
   SkinnyOptimisticOracleInterface public immutable oracle;
   bytes32 public externalIdentifier;
 
-
   //Vesting
   uint32 public maxVestingTime = 10 minutes; // rewards drip
-  uint32 public maxCliffTime =  10 minutes; // cliff before rewards are released
+  uint32 public maxCliffTime = 10 minutes; // cliff before rewards are released
 
   // Staking Pools (bond insurance)
   mapping(IERC20 => StakingPool) public pool;
@@ -128,7 +125,6 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
   //Disputes
   //uint32 public defaultDisputePeriod = 10 minutes;
   uint32 public maxOutstandingDisputes = 3;
-
 
   /**
    * @dev Ensures that a given EIP-712 signature matches the hashed proposal
@@ -191,15 +187,15 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
    * @return residualAmount The methodologist's share of the rewards
    */
   function claimableRewards(bytes32 indexId)
-    public
+    external
     view
     returns (
       uint256 total,
       uint256 poolAmount,
       uint256 reporterAmount,
       uint256 residualAmount
-     // uint256 vestingTime
     )
+  // uint256 vestingTime
   {
     return index[indexId].claimableRewards();
   }
@@ -230,7 +226,6 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
       uint32 expiresAt
     )
   {
-
     proposalId = _proposalId(relayed.timestamp, relayed.value, relayed.data);
     require(proposal[proposalId].timestamp == 0, "duplicate proposal");
 
@@ -243,8 +238,8 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
       _index.disputesOutstanding <= maxOutstandingDisputes,
       "max diputes out"
     );
-   
-// DAO must set disputePeriod to 2X period of IPFS posts.
+
+    // DAO must set disputePeriod to 2X period of IPFS posts.
     require(
       block.timestamp < relayed.timestamp + (_index.disputePeriod / 2),
       "not disputable"
@@ -255,13 +250,11 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
       "not enough tokens"
     );
 
-
     expiresAt = uint32(block.timestamp) + _index.disputePeriod;
 
     proposal[proposalId] = relayed;
     _issueRewards(relayed.indexId, msg.sender);
-    
-    
+
     _index.lastUpdated = relayed.timestamp;
     emit Relayed(relayed.indexId, proposalId, relayed, msg.sender, bond);
   }
@@ -325,8 +318,10 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
       pool[request.currency].slash(_index.bondAmount, _index.sponsor);
     } else {
       // successful proposal, return bond to sponsor
-      request.currency.safeTransfer(_index.sponsor, request.currency.balanceOf(address(this)));
-
+      request.currency.safeTransfer(
+        _index.sponsor,
+        request.currency.balanceOf(address(this))
+      );
     }
 
     emit Settled(relayed.indexId, id, relayed.value, request.resolvedPrice);
@@ -396,16 +391,14 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
     externalIdentifier = identifier;
   }
 
-
   /**
    * @dev Update the vesting time.
    * @param vestingTime The amount of minutes during which rewards vest. They are released constantly throughout.
    * @param cliffTime The amount of minutes before vestingTime starts.
    */
-  function setVestingParameters(
-    uint32 vestingTime,
-    uint32 cliffTime
-  ) external onlyRole(MANAGER)
+  function setVestingParameters(uint32 vestingTime, uint32 cliffTime)
+    external
+    onlyRole(MANAGER)
   {
     maxVestingTime = vestingTime;
     maxCliffTime = cliffTime;
@@ -416,10 +409,9 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
    * @param outstandingDisputes The new maxOutstandingDisputes
    */
   function setMaxOutstandingDisputes(
-   // uint16 disputePeriod, 
+    // uint16 disputePeriod,
     uint8 outstandingDisputes
-  ) external onlyRole(MANAGER)
-  {
+  ) external onlyRole(MANAGER) {
     //defaultDisputePeriod = disputePeriod;
     maxOutstandingDisputes = outstandingDisputes;
   }
@@ -437,9 +429,7 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
     uint256 burnFee,
     address payee
   ) external onlyRole(MANAGER) {
-    require(
-      mintFee < 10**18 && burnFee < 10**18
-    );
+    require(mintFee < 10**18 && burnFee < 10**18, "fee too high");
     pool[token].setFees(mintFee, burnFee, payee);
   }
 
@@ -472,8 +462,7 @@ contract SkinnyDAOracle is AccessControl, EIP712 {
       uint256 total,
       uint256 poolAmount,
       uint256 reporterAmount,
-      uint256 residualAmount
-     // uint256 vestingTime
+      uint256 residualAmount // uint256 vestingTime
     ) = _index.claimableRewards();
 
     // Pull in reward money from the sponsor

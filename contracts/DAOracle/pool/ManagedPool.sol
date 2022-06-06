@@ -76,6 +76,7 @@ abstract contract ManagedPool is AccessControl, ERC20 {
 
     // Calculate the pool shares for the new deposit
     if (oldShares != 0) {
+      require(oldBalance > 0, "DIV0");
       // shares = stake * oldShares / oldBalance
       shares = (_stakeAmount * oldShares) / oldBalance;
     } else {
@@ -83,7 +84,6 @@ abstract contract ManagedPool is AccessControl, ERC20 {
       // arbitrarily low number (e.g. 1000 shares) then subsequent smaller shares may be = 0.
       shares = _stakeAmount;
     }
-
 
     // Transfer shares to caller
     _mint(msg.sender, shares);
@@ -119,12 +119,13 @@ abstract contract ManagedPool is AccessControl, ERC20 {
     emit Payout(msg.sender, tokens, _shareAmount);
   }
 
-/*
+  /*
   /**
    * @dev Calculate the minting fee
    * @param _amount The number of tokens being staked
    * @return fee The calculated fee value
-   *//*
+   */
+  /*
   function getMintFee(uint256 _amount) public view returns (uint256 fee) {
     fee = (_amount * mintFee) / 1e18;
   }
@@ -133,7 +134,8 @@ abstract contract ManagedPool is AccessControl, ERC20 {
    * @dev Calculate the burning fee
    * @param _amount The number of pool tokens being burned
    * @return fee The calculated fee value
-   *//*
+   */
+  /*
   function getBurnFee(uint256 _amount) public view returns (uint256 fee) {
     fee = (_amount * burnFee) / 1e18;
   }
